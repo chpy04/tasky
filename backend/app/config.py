@@ -9,18 +9,22 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Repo root is three levels up from this file (backend/app/config.py)
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+# backend/ is two levels up from this file (backend/app/config.py)
+_BACKEND_ROOT = Path(__file__).resolve().parents[1]
+_REPO_ROOT = _BACKEND_ROOT.parent
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=str(_REPO_ROOT / ".env"), env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=str(_BACKEND_ROOT / ".env"), env_file_encoding="utf-8"
+    )
 
     database_url: str = f"sqlite:///{_REPO_ROOT / 'data' / 'app.db'}"
     vault_path: str = str(_REPO_ROOT / "vault")
 
     # LLM
-    anthropic_api_key: str = ""
+    openai_api_key: str = ""
+    llm_model: str = "gpt-4o"
 
     # Connectors (optional at startup — validated when connector is used)
     github_token: str = ""

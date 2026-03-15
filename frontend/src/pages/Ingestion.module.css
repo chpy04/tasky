@@ -10,7 +10,7 @@
   top: 0;
   z-index: 1;
   background: #15120c;
-  padding: 28px 36px 20px;
+  padding: 28px 36px 0;
   border-bottom: 1px solid #2a2118;
 }
 
@@ -19,17 +19,40 @@
   font-style: italic;
   font-size: 22px;
   color: #c09060;
-  margin: 0 0 4px;
+  margin: 0 0 16px;
   font-weight: 400;
 }
 
-.subtitle {
+/* ── Tabs ───────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 0;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 20px;
   font-family: "DM Mono", monospace;
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #5e4e38;
-  margin: 0;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.tab:hover {
+  color: #907a58;
+}
+
+.tabActive {
+  color: #c09060;
+  border-bottom-color: #c09060;
 }
 
 .body {
@@ -180,4 +203,132 @@
   color: #4a3e2c;
   letter-spacing: 0.06em;
   font-style: italic;
+}
+
+/* ── Sections ───────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5e4e38;
+  margin: 0;
+  font-weight: 400;
+}
+
+.previewCards {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── New run form ───────────────────────────────────── */
+
+.runForm {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.dateLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5e4e38;
+}
+
+.dateInput {
+  background: #1b1610;
+  border: 1px solid #2a2118;
+  border-radius: 3px;
+  padding: 8px 12px;
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  color: #c09060;
+  color-scheme: dark;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: #907a58;
+}
+
+/* ── Run row ────────────────────────────────────────── */
+
+.runRowToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #907a58;
+  padding: 0;
+  text-align: left;
+}
+
+.runRowToggle:hover {
+  color: #c09060;
+}
+
+.runActions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ── Pipe separator ─────────────────────────────────── */
+
+.pipe {
+  color: #2a2118;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+}
+
+/* ── Prompt section ────────────────────────────────── */
+
+.promptSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promptHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.copyBtn {
+  background: transparent;
+  border: 1px solid #2a2118;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5e4e38;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.copyBtn:hover {
+  color: #c09060;
+  border-color: #907a58;
 }

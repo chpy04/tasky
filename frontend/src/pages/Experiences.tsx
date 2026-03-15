@@ -4,6 +4,7 @@ import {
   useExperiences,
   useCreateExperience,
   useDeactivateExperience,
+  useSyncExperiences,
 } from "../api/useExperiences";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
@@ -124,7 +125,8 @@ function CreateModal({ onClose }: { onClose: () => void }) {
           autoComplete="off"
         />
         <p className={styles.hint}>
-          Relative to <code>vault/Experiences/</code> — the folder must already exist.
+          Relative to <code>vault/Experiences/</code> — the vault folder will be created if it
+          doesn't exist.
         </p>
         {create.isError && <p className={styles.formError}>{(create.error as Error).message}</p>}
       </form>
@@ -135,15 +137,34 @@ function CreateModal({ onClose }: { onClose: () => void }) {
 export default function Experiences() {
   const [showCreate, setShowCreate] = useState(false);
   const { data: experiences = [], isLoading, isError } = useExperiences();
+  const sync = useSyncExperiences();
+  const syncData = sync.data;
+  const hasChanges = syncData && (syncData.deactivated.length > 0 || syncData.created.length > 0);
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Experiences</h1>
-        <Button variant="primary" onClick={() => setShowCreate(true)}>
-          New Experience
-        </Button>
+        <div className={styles.headerActions}>
+          <Button variant="ghost" onClick={() => sync.mutate()} disabled={sync.isPending}>
+            {sync.isPending ? "Syncing…" : "Sync Vault"}
+          </Button>
+          <Button variant="primary" onClick={() => setShowCreate(true)}>
+            New Experience
+          </Button>
+        </div>
       </div>
+
+      {hasChanges && (
+        <p className={styles.syncBanner}>
+          Vault sync:{" "}
+          {syncData.created.length > 0 &&
+            `${syncData.created.length} new experience${syncData.created.length !== 1 ? "s" : ""} added`}
+          {syncData.created.length > 0 && syncData.deactivated.length > 0 && ", "}
+          {syncData.deactivated.length > 0 &&
+            `${syncData.deactivated.length} deactivated (vault folder missing)`}
+        </p>
+      )}
 
       {isError && <p className={styles.loadError}>Failed to load experiences.</p>}
 

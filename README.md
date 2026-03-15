@@ -36,10 +36,10 @@ npm run dev
 
 ### Environment
 
-Copy `.env.example` to `.env` and fill in your credentials.
+Copy `backend/.env.example` to `backend/.env` and fill in your credentials.
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
 ## Repository structure

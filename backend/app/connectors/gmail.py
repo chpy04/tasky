@@ -144,19 +144,22 @@ class GmailConnector(BaseConnector):
 
     # ── Public interface ──────────────────────────────────────────────────
 
-    def fetch(self, since: datetime) -> ConnectorResult:
-        """Fetch emails received after `since`.
+    def fetch(self, since: datetime, until: datetime | None = None) -> ConnectorResult:
+        """Fetch emails received after `since` (and optionally before `until`).
 
-        Uses Gmail's `after:<epoch>` query operator for server-side filtering.
-        Each matching message is fetched in metadata-only mode (headers +
-        snippet). Failures on individual messages are swallowed so one bad
-        fetch doesn't drop the entire batch.
+        Uses Gmail's `after:<epoch>` and `before:<epoch>` query operators for
+        server-side filtering. Each matching message is fetched in full mode
+        (headers + body). Failures on individual messages are swallowed so one
+        bad fetch doesn't drop the entire batch.
         """
         start = time.monotonic()
         fetched_at = datetime.now(timezone.utc).isoformat()
         since_iso = since.isoformat()
 
-        stubs = self._list_messages(f"after:{int(since.timestamp())}")
+        query = f"after:{int(since.timestamp())}"
+        if until is not None:
+            query += f" before:{int(until.timestamp())}"
+        stubs = self._list_messages(query)
         if not stubs:
             return ConnectorResult(
                 success=True,
@@ -189,6 +192,7 @@ class GmailConnector(BaseConnector):
                     "metadata": {
                         "fetched_at": fetched_at,
                         "since": since_iso,
+                        **({"until": until.isoformat()} if until is not None else {}),
                         "raw_count": len(stubs),
                         "count": len(messages),
                         "kind": "emails",

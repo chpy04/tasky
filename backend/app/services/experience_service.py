@@ -44,13 +44,17 @@ class ExperienceService:
         if existing:
             if existing.active:
                 raise HTTPException(status_code=409, detail="Experience already active")
+            if not self.vault.experience_path_exists(folder_path):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Vault folder no longer exists at {folder_path}",
+                )
             existing.active = True
             self.db.commit()
             self.db.refresh(existing)
             return existing
 
-        if not self.vault.experience_path_exists(folder_path):
-            raise HTTPException(status_code=400, detail="Vault path does not exist")
+        self.vault.scaffold_experience_folder(folder_path)
 
         exp = Experience(folder_path=folder_path, active=True)
         self.db.add(exp)
@@ -69,12 +73,45 @@ class ExperienceService:
     def update(self, experience_id: int, **kwargs) -> Experience:
         """Update active flag, folder_path, or other metadata fields."""
         exp = self.get(experience_id)
+        if kwargs.get("active") is True and not exp.active:
+            if not self.vault.experience_path_exists(exp.folder_path):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Vault folder no longer exists at {exp.folder_path}",
+                )
         for field, value in kwargs.items():
             if value is not None:
                 setattr(exp, field, value)
         self.db.commit()
         self.db.refresh(exp)
         return exp
+
+    def sync_with_vault(self) -> dict:
+        """Sync DB experience records with the vault filesystem.
+
+        Phase 1: Deactivate active experiences whose vault folder is missing.
+        Phase 2: Create new records for vault folders not yet in the DB.
+        """
+        deactivated: list[str] = []
+        created: list[str] = []
+
+        # Phase 1 — validate active experiences
+        active_experiences = self.list_experiences(active_only=True)
+        for exp in active_experiences:
+            if not self.vault.experience_path_exists(exp.folder_path):
+                exp.active = False
+                deactivated.append(exp.folder_path)
+
+        # Phase 2 — discover new experiences from vault
+        known_paths = {e.folder_path for e in self.db.query(Experience).all()}
+        vault_paths = self.vault.list_experiences()
+        for path in vault_paths:
+            if path not in known_paths:
+                self.db.add(Experience(folder_path=path, active=True))
+                created.append(path)
+
+        self.db.commit()
+        return {"deactivated": deactivated, "created": created}
 
     def get_vault_context(self, experience_id: int) -> dict[str, str]:
         """Return overview.md and current_status.md content keyed by filename."""

@@ -30,7 +30,7 @@ npm run build                                 # Production build
 ### Environment Setup
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 # Required: ANTHROPIC_API_KEY
 # Optional: GITHUB_TOKEN, GMAIL_*, SLACK_*, CANVAS_* (validated when used)
 ```

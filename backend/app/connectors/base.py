@@ -37,11 +37,13 @@ class ConnectorResult:
 
 class BaseConnector(ABC):
     @abstractmethod
-    def fetch(self, since: datetime) -> ConnectorResult:
+    def fetch(self, since: datetime, until: datetime | None = None) -> ConnectorResult:
         """Fetch data from the external source since the given UTC datetime.
 
         Args:
             since: Only return items updated/created after this timestamp (UTC).
+            until: If set, exclude items updated/created after this timestamp
+                   (UTC). Useful for bounding a fetch to a specific time window.
 
         Returns:
             A ConnectorResult with the fetched batch dicts in payload.

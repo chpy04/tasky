@@ -145,7 +145,7 @@ class CanvasConnector(BaseConnector):
         }
 
     @staticmethod
-    def _prune_submission(s: dict, since_iso: str) -> dict | None:
+    def _prune_submission(s: dict, since_iso: str, until_iso: str | None = None) -> dict | None:
         """Return a pruned submission dict only if it has new instructor feedback.
 
         'New feedback' means either:
@@ -158,11 +158,15 @@ class CanvasConnector(BaseConnector):
         submitter_id = s.get("user_id")
 
         new_grade = state == "graded" and graded_at >= since_iso
+        if new_grade and until_iso and graded_at > until_iso:
+            new_grade = False
 
         new_comments = [
             c
             for c in (s.get("submission_comments") or [])
-            if (c.get("created_at") or "") >= since_iso and c.get("author_id") != submitter_id
+            if (c.get("created_at") or "") >= since_iso
+            and c.get("author_id") != submitter_id
+            and (not until_iso or (c.get("created_at") or "") <= until_iso)
         ]
 
         if not new_grade and not new_comments:
@@ -194,10 +198,11 @@ class CanvasConnector(BaseConnector):
 
     # ── Public interface ──────────────────────────────────────────────────
 
-    def fetch(self, since: datetime) -> ConnectorResult:
+    def fetch(self, since: datetime, until: datetime | None = None) -> ConnectorResult:
         start = time.monotonic()
         fetched_at = datetime.now(timezone.utc).isoformat()
         since_iso = since.isoformat()
+        until_iso = until.isoformat() if until else None
 
         # 1. Favorite courses (scoping)
         courses: list = self._request(  # type: ignore[assignment]
@@ -231,7 +236,8 @@ class CanvasConnector(BaseConnector):
                 },
             )
             for a in raw:
-                if (a.get("updated_at") or "") >= since_iso:
+                updated = a.get("updated_at") or ""
+                if updated >= since_iso and (not until_iso or updated <= until_iso):
                     assignments.append(self._prune_assignment(a, course_id_to_name[cid]))
 
         # 3. Announcements (all favorited courses, single call).
@@ -249,7 +255,10 @@ class CanvasConnector(BaseConnector):
         )
         announcements: list[dict] = []
         for a in raw_announcements:
-            if (a.get("posted_at") or "") < since_iso:
+            posted = a.get("posted_at") or ""
+            if posted < since_iso:
+                continue
+            if until_iso and posted > until_iso:
                 continue
             ctx = a.get("context_code", "")  # e.g. "course_12345"
             try:
@@ -275,51 +284,43 @@ class CanvasConnector(BaseConnector):
                 },
             )
             for s in raw_subs:
-                pruned = self._prune_submission(s, since_iso)
+                pruned = self._prune_submission(s, since_iso, until_iso)
                 if pruned is not None:
                     pruned["course"] = course_id_to_name[cid]
                     submissions.append(pruned)
 
-        # Build payload — one batch dict per category, omit empty ones
-        payload: list[dict] = []
-        base_meta = {"fetched_at": fetched_at, "since": since_iso}
+        # Tag each item with its kind and merge into a single list
+        for item in assignments:
+            item["kind"] = "assignment"
+        for item in announcements:
+            item["kind"] = "announcement"
+        for item in submissions:
+            item["kind"] = "graded_submission"
 
-        if assignments:
-            payload.append(
-                {
-                    "source_type": "canvas",
-                    "payload": json.dumps(assignments, default=str),
-                    "metadata": {**base_meta, "kind": "assignments", "count": len(assignments)},
-                }
-            )
-        if announcements:
-            payload.append(
-                {
-                    "source_type": "canvas",
-                    "payload": json.dumps(announcements, default=str),
-                    "metadata": {**base_meta, "kind": "announcements", "count": len(announcements)},
-                }
-            )
-        if submissions:
-            payload.append(
-                {
-                    "source_type": "canvas",
-                    "payload": json.dumps(submissions, default=str),
-                    "metadata": {
-                        **base_meta,
-                        "kind": "graded_submissions",
-                        "count": len(submissions),
-                    },
-                }
-            )
+        all_items = assignments + announcements + submissions
 
-        total_items = len(assignments) + len(announcements) + len(submissions)
+        base_meta: dict[str, str] = {"fetched_at": fetched_at, "since": since_iso}
+        if until_iso:
+            base_meta["until"] = until_iso
+
         return ConnectorResult(
             success=True,
-            found_new_content=total_items > 0,
-            item_count=total_items,
+            found_new_content=len(all_items) > 0,
+            item_count=len(all_items),
             api_calls=self._api_calls,
             llm_cost=0.0,
             duration_ms=(time.monotonic() - start) * 1000,
-            payload=payload,
+            payload=[
+                {
+                    "source_type": "canvas",
+                    "payload": json.dumps(all_items, default=str),
+                    "metadata": {
+                        **base_meta,
+                        "kind": "mixed",
+                        "count": len(all_items),
+                    },
+                }
+            ]
+            if all_items
+            else [],
         )

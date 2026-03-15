@@ -152,11 +152,14 @@ class GitHubConnector(BaseConnector):
 
         return pruned
 
-    def fetch(self, since: datetime) -> ConnectorResult:
+    def fetch(self, since: datetime, until: datetime | None = None) -> ConnectorResult:
         """Fetch all notifications (read and unread) since the given datetime.
 
         Args:
             since: Only return notifications updated after this UTC datetime.
+            until: If set, exclude notifications updated after this UTC datetime.
+                   GitHub's API has no native ``before`` parameter, so this is
+                   applied as a post-filter on ``updated_at``.
 
         Returns:
             ConnectorResult with a single batch dict in payload, or an empty
@@ -189,6 +192,9 @@ class GitHubConnector(BaseConnector):
             )
 
         filtered = [n for n in notifications if n.get("reason") not in self.EXCLUDED_REASONS]
+        if until is not None:
+            until_iso = until.isoformat()
+            filtered = [n for n in filtered if n.get("updated_at", "") <= until_iso]
         pruned = [self._enrich_notification(n) for n in filtered]
 
         return ConnectorResult(
@@ -206,6 +212,7 @@ class GitHubConnector(BaseConnector):
                         "fetched_at": fetched_at,
                         "username": username,
                         "since": since_iso,
+                        **({"until": until.isoformat()} if until is not None else {}),
                         "raw_count": len(notifications),
                         "count": len(pruned),
                         "kind": "notifications",

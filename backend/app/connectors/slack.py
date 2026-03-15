@@ -132,15 +132,18 @@ class SlackConnector(BaseConnector):
         self._user_cache[user_id] = name
         return name
 
-    def _search(self, query: str, oldest_date: str) -> list[dict]:
+    def _search(self, query: str, oldest_date: str, newest_date: str | None = None) -> list[dict]:
         """Run a search.messages query and return all matching messages."""
         messages: list[dict] = []
         page = 1
+        search_query = f"{query} after:{oldest_date}"
+        if newest_date is not None:
+            search_query += f" before:{newest_date}"
         while True:
             data = self._request(
                 "search.messages",
                 {
-                    "query": f"{query} after:{oldest_date}",
+                    "query": search_query,
                     "sort": "timestamp",
                     "sort_dir": "asc",
                     "count": "100",
@@ -213,7 +216,7 @@ class SlackConnector(BaseConnector):
 
     # ── Public interface ──────────────────────────────────────────────────
 
-    def fetch(self, since: datetime) -> ConnectorResult:
+    def fetch(self, since: datetime, until: datetime | None = None) -> ConnectorResult:
         """Fetch Slack activity relevant to the user since the given datetime.
 
         Covers: @mentions, channel @mentions, keyword alerts, messages sent by
@@ -222,6 +225,7 @@ class SlackConnector(BaseConnector):
 
         Args:
             since: Only return items with a ts after this UTC datetime.
+            until: Optional upper bound — only return items before this UTC datetime.
 
         Returns:
             ConnectorResult with one batch dict in payload containing all items,
@@ -242,20 +246,28 @@ class SlackConnector(BaseConnector):
 
         # search.messages only supports date-level `after:` filtering.
         oldest_date = since.strftime("%Y-%m-%d")
+        newest_date = until.strftime("%Y-%m-%d") if until is not None else None
 
         # ── Search passes ────────────────────────────────────────────────
         raw_items: list[tuple[dict, str]] = []  # (message_dict, reason)
 
-        raw_items += [(m, "mention") for m in self._search(f"to:<@{user_id}>", oldest_date)]
-        raw_items += [(m, "sent") for m in self._search(f"from:<@{user_id}>", oldest_date)]
+        raw_items += [
+            (m, "mention") for m in self._search(f"to:<@{user_id}>", oldest_date, newest_date)
+        ]
+        raw_items += [
+            (m, "sent") for m in self._search(f"from:<@{user_id}>", oldest_date, newest_date)
+        ]
 
         keywords = [k.strip() for k in settings.slack_keywords.split(",") if k.strip()]
         for kw in keywords:
-            raw_items += [(m, f"keyword:{kw}") for m in self._search(kw, oldest_date)]
+            raw_items += [(m, f"keyword:{kw}") for m in self._search(kw, oldest_date, newest_date)]
 
         # ── Post-filter by exact timestamp ───────────────────────────────
         since_ts = since.timestamp()
         raw_items = [(m, r) for (m, r) in raw_items if float(m.get("ts", 0)) > since_ts]
+        if until is not None:
+            until_ts = until.timestamp()
+            raw_items = [(m, r) for (m, r) in raw_items if float(m.get("ts", 0)) < until_ts]
 
         # ── Deduplicate (same message can match multiple queries) ─────────
         seen: set[str] = set()
@@ -314,6 +326,7 @@ class SlackConnector(BaseConnector):
                         "fetched_at": fetched_at,
                         "username": username,
                         "since": since_iso,
+                        **({"until": until.isoformat()} if until is not None else {}),
                         "count": len(items),
                         "kind": "messages",
                         "query_types": query_types,

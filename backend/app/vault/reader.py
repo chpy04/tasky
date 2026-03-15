@@ -52,22 +52,56 @@ class VaultReader:
             content = template_path.read_text(encoding="utf-8") if template_path.exists() else ""
             dest_file.write_text(content, encoding="utf-8")
 
+    def list_experiences(self) -> list[str]:
+        """Return relative folder paths for all experiences in the vault.
+
+        Walks vault/Experiences/{section}/{experience} two levels deep.
+        Returns paths like ["Class/cpp", "Projects/task_manager"].
+        """
+        experiences_dir = self.root / "Experiences"
+        if not experiences_dir.is_dir():
+            return []
+        paths: list[str] = []
+        for section in sorted(experiences_dir.iterdir()):
+            if not section.is_dir():
+                continue
+            for experience in sorted(section.iterdir()):
+                if not experience.is_dir():
+                    continue
+                paths.append(f"{section.name}/{experience.name}")
+        return paths
+
     def experience_path_exists(self, folder_path: str) -> bool:
         """Return True if vault/Experiences/{folder_path} is an existing directory."""
         path = self.root / "Experiences" / folder_path
         return path.is_dir()
 
     def list_prompts(self) -> list[str]:
-        # TODO: return list of .md filenames in self.root / "Prompts"
-        raise NotImplementedError
+        """Return prompt names (without .md extension) for all prompts in vault/Prompts/.
+
+        Names are relative to vault/Prompts/, e.g. ["system", "sources/github"].
+        """
+        prompts_dir = self.root / "Prompts"
+        if not prompts_dir.is_dir():
+            return []
+        return sorted(
+            str(p.relative_to(prompts_dir).with_suffix(""))
+            for p in prompts_dir.rglob("*.md")
+            if p.name != "README.md"
+        )
 
     def read_prompt(self, name: str) -> str:
-        # TODO: read self.root / "Prompts" / f"{name}.md"; raise if missing
-        raise NotImplementedError
+        """Read vault/Prompts/{name}.md. Raises FileNotFoundError if missing."""
+        path = self.root / "Prompts" / f"{name}.md"
+        if not path.exists():
+            raise FileNotFoundError(f"Prompt not found: {path}")
+        return path.read_text(encoding="utf-8")
 
     def write_prompt(self, name: str, content: str) -> None:
-        # TODO: write content to self.root / "Prompts" / f"{name}.md"
-        raise NotImplementedError
+        """Write content to vault/Prompts/{name}.md, creating parent dirs as needed."""
+        path = self.root / "Prompts" / f"{name}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
 
     def write_daily_summary(self, date_str: str, content: str) -> None:
         # TODO: write to self.root / "Daily" / date_str[:4] / f"{date_str}.md"

@@ -40,6 +40,28 @@ export function useCreateExperience() {
   });
 }
 
+interface SyncResult {
+  deactivated: string[];
+  created: string[];
+}
+
+export function useSyncExperiences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<SyncResult> => {
+      const res = await fetch("/api/experiences/sync", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail ?? `Error ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["experiences"] });
+    },
+  });
+}
+
 export function useDeactivateExperience() {
   const queryClient = useQueryClient();
   return useMutation({

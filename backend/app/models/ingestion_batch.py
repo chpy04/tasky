@@ -21,11 +21,17 @@ TODO: decide per-source normalization strategy before batch creation
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Text
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
-from app.models.ingestion_run import SourceType
+
+
+class SourceType(str, enum.Enum):
+    slack = "slack"
+    email = "email"
+    github = "github"
+    canvas = "canvas"
 
 
 class BatchStatus(str, enum.Enum):
@@ -49,6 +55,13 @@ class IngestionBatch(Base):
         Enum(BatchStatus), nullable=False, default=BatchStatus.pending
     )
     error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    item_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    api_calls: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+    llm_cost: Mapped[float | None] = mapped_column(Float, nullable=True)
+    found_new_content: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    success: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    connector_metadata: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     ingestion_run: Mapped["IngestionRun"] = relationship("IngestionRun", back_populates="batches")  # type: ignore[name-defined]
     proposals: Mapped[list["TaskProposal"]] = relationship(

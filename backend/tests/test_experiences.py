@@ -49,12 +49,11 @@ def test_create_experience(db, mock_vault):
     assert exp.active is True
 
 
-def test_create_experience_vault_path_missing(db, mock_vault):
-    mock_vault.experience_path_exists.return_value = False
+def test_create_experience_scaffolds_vault_folder(db, mock_vault):
     svc = ExperienceService(db, vault=mock_vault)
-    with pytest.raises(HTTPException) as exc_info:
-        svc.create("Projects/ghost")
-    assert exc_info.value.status_code == 400
+    exp = svc.create("Projects/new_project")
+    mock_vault.scaffold_experience_folder.assert_called_once_with("Projects/new_project")
+    assert exp.active is True
 
 
 def test_create_experience_already_active_raises_409(db, mock_vault):
@@ -72,6 +71,16 @@ def test_create_experience_reactivates_inactive(db, mock_vault):
     svc = ExperienceService(db, vault=mock_vault)
     exp = svc.create("Projects/dormant")
     assert exp.active is True
+
+
+def test_create_experience_reactivate_vault_missing(db, mock_vault):
+    db.add(Experience(folder_path="Projects/dormant", active=False))
+    db.commit()
+    mock_vault.experience_path_exists.return_value = False
+    svc = ExperienceService(db, vault=mock_vault)
+    with pytest.raises(HTTPException) as exc_info:
+        svc.create("Projects/dormant")
+    assert exc_info.value.status_code == 400
 
 
 def test_get_experience(db, mock_vault):
@@ -137,10 +146,10 @@ def test_api_create_experience(client):
     assert "id" in data
 
 
-def test_api_create_experience_vault_path_missing(client, mock_vault):
-    mock_vault.experience_path_exists.return_value = False
+def test_api_create_experience_scaffolds_vault(client, mock_vault):
     resp = client.post("/experiences", json={"folder_path": "Projects/ghost"})
-    assert resp.status_code == 400
+    assert resp.status_code == 201
+    mock_vault.scaffold_experience_folder.assert_called_with("Projects/ghost")
 
 
 def test_api_create_experience_already_active_returns_409(client):
@@ -212,3 +221,65 @@ def test_api_list_experiences_active_filter(client, db):
     paths = [e["folder_path"] for e in resp.json()]
     assert "Projects/active" in paths
     assert "Projects/inactive" not in paths
+
+
+# ---------------------------------------------------------------------------
+# Sync tests
+# ---------------------------------------------------------------------------
+
+
+def test_sync_deactivates_missing_vault_paths(db, mock_vault):
+    db.add(Experience(folder_path="Projects/exists", active=True))
+    db.add(Experience(folder_path="Projects/gone", active=True))
+    db.commit()
+    mock_vault.experience_path_exists.side_effect = lambda p: p != "Projects/gone"
+    mock_vault.list_experiences.return_value = ["Projects/exists"]
+    svc = ExperienceService(db, vault=mock_vault)
+    result = svc.sync_with_vault()
+    assert result["deactivated"] == ["Projects/gone"]
+    assert db.query(Experience).filter_by(folder_path="Projects/gone").first().active is False
+
+
+def test_sync_creates_new_experiences(db, mock_vault):
+    db.add(Experience(folder_path="Projects/existing", active=True))
+    db.commit()
+    mock_vault.experience_path_exists.return_value = True
+    mock_vault.list_experiences.return_value = ["Projects/existing", "Class/new_class"]
+    svc = ExperienceService(db, vault=mock_vault)
+    result = svc.sync_with_vault()
+    assert result["created"] == ["Class/new_class"]
+    new_exp = db.query(Experience).filter_by(folder_path="Class/new_class").first()
+    assert new_exp is not None
+    assert new_exp.active is True
+
+
+def test_sync_does_not_reactivate_inactive(db, mock_vault):
+    db.add(Experience(folder_path="Projects/dormant", active=False))
+    db.commit()
+    mock_vault.experience_path_exists.return_value = True
+    mock_vault.list_experiences.return_value = ["Projects/dormant"]
+    svc = ExperienceService(db, vault=mock_vault)
+    result = svc.sync_with_vault()
+    assert result["created"] == []
+    assert result["deactivated"] == []
+    assert db.query(Experience).filter_by(folder_path="Projects/dormant").first().active is False
+
+
+def test_update_reactivate_validates_vault_path(db, mock_vault):
+    db.add(Experience(folder_path="Projects/gone", active=False))
+    db.commit()
+    mock_vault.experience_path_exists.return_value = False
+    svc = ExperienceService(db, vault=mock_vault)
+    exp_id = db.query(Experience).first().id
+    with pytest.raises(HTTPException) as exc_info:
+        svc.update(exp_id, active=True)
+    assert exc_info.value.status_code == 400
+
+
+def test_api_sync_experiences(client, mock_vault):
+    mock_vault.experience_path_exists.return_value = True
+    mock_vault.list_experiences.return_value = ["Class/new_one"]
+    resp = client.post("/experiences/sync")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "Class/new_one" in data["created"]

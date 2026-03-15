@@ -8,7 +8,7 @@ dist/
 .ruff_cache/
 
 # Environment
-.env
+backend/.env
 
 # Runtime data (db, tokens, etc.) — keep the directory but ignore all contents
 data/*

@@ -23,6 +23,13 @@ from app.services.experience_service import ExperienceService
 router = APIRouter()
 
 
+@router.post("/sync")
+def sync_experiences(db: Session = Depends(get_db)):
+    """Sync experience records with the vault filesystem."""
+    svc = ExperienceService(db)
+    return svc.sync_with_vault()
+
+
 @router.get("", response_model=list[ExperienceResponse])
 def list_experiences(
     active: bool | None = None,

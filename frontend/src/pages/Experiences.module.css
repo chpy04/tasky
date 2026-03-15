@@ -104,6 +104,23 @@
   margin: 0;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.syncBanner {
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  color: #e8c070;
+  background: #2a1810;
+  border: 1px solid #362010;
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin: 0 0 16px 0;
+}
+
 .loadError {
   font-family: "DM Mono", monospace;
   font-size: 15px;

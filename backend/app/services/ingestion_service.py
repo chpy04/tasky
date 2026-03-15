@@ -14,17 +14,193 @@ TODO: implement retry and concurrency strategy (tech spec §18 TODO)
 TODO: implement per-source acquisition details (tech spec §19 TODO)
 """
 
-from sqlalchemy.orm import Session
+import json
+import logging
+from datetime import datetime, timezone
+
+from sqlalchemy.orm import Session, joinedload
+
+from app.models.ingestion_batch import BatchStatus, IngestionBatch, SourceType
+from app.models.ingestion_run import IngestionRun, RunStatus, TriggeredBy
+from app.models.task_proposal import TaskProposal
+
+logger = logging.getLogger(__name__)
 
 
 class IngestionService:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def trigger_manual_run(self, source_types: list[str] | None = None):
-        # TODO: create IngestionRun(triggered_by=manual); run connectors; process batches
-        raise NotImplementedError
+    def trigger_run(
+        self,
+        range_start: datetime,
+        range_end: datetime,
+        triggered_by: TriggeredBy = TriggeredBy.manual,
+    ) -> IngestionRun:
+        run = IngestionRun(
+            status=RunStatus.running,
+            range_start=range_start,
+            range_end=range_end,
+            started_at=datetime.now(timezone.utc),
+            triggered_by=triggered_by,
+        )
+        self.db.add(run)
+        self.db.flush()
 
-    def process_batch(self, batch_id: int):
-        # TODO: assemble context from batch + active tasks + experience markdown; call LLM; persist proposals
-        raise NotImplementedError
+        self._run_connectors(run)
+        return run
+
+    def _run_connectors(self, run: IngestionRun) -> None:
+        connector_factories = [
+            (
+                "github",
+                lambda: __import__(
+                    "app.connectors.github", fromlist=["GitHubConnector"]
+                ).GitHubConnector(),
+            ),
+            (
+                "gmail",
+                lambda: __import__(
+                    "app.connectors.gmail", fromlist=["GmailConnector"]
+                ).GmailConnector(),
+            ),
+            (
+                "slack",
+                lambda: __import__(
+                    "app.connectors.slack", fromlist=["SlackConnector"]
+                ).SlackConnector(),
+            ),
+            (
+                "canvas",
+                lambda: __import__(
+                    "app.connectors.canvas", fromlist=["CanvasConnector"]
+                ).CanvasConnector(),
+            ),
+        ]
+
+        source_type_map = {
+            "github": SourceType.github,
+            "gmail": SourceType.email,
+            "slack": SourceType.slack,
+            "canvas": SourceType.canvas,
+        }
+
+        errors: list[str] = []
+
+        for name, factory in connector_factories:
+            try:
+                try:
+                    connector = factory()
+                except ValueError:
+                    logger.info("Connector %s is not configured, skipping", name)
+                    continue
+
+                result = connector.fetch(since=run.range_start, until=run.range_end)
+
+                for payload_dict in result.payload:
+                    batch = IngestionBatch(
+                        ingestion_run_id=run.id,
+                        source_type=source_type_map[name],
+                        raw_payload=payload_dict["payload"],
+                        created_at=datetime.now(timezone.utc),
+                        status=BatchStatus.processed if result.success else BatchStatus.failed,
+                        item_count=result.item_count,
+                        api_calls=result.api_calls,
+                        duration_ms=result.duration_ms,
+                        llm_cost=result.llm_cost,
+                        found_new_content=result.found_new_content,
+                        success=result.success,
+                        connector_metadata=json.dumps(payload_dict.get("metadata", {})),
+                    )
+                    self.db.add(batch)
+
+            except Exception as exc:
+                error_msg = f"{name}: {exc}"
+                logger.error("Connector %s failed: %s", name, exc)
+                errors.append(error_msg)
+                continue
+
+        run.finished_at = datetime.now(timezone.utc)
+
+        if errors and not run.batches:
+            self.db.flush()
+            # Re-check after flush
+            batch_count = (
+                self.db.query(IngestionBatch)
+                .filter(IngestionBatch.ingestion_run_id == run.id)
+                .count()
+            )
+            if batch_count == 0:
+                run.status = RunStatus.failed
+                run.error_summary = "; ".join(errors)
+            else:
+                run.status = RunStatus.completed
+        else:
+            run.status = RunStatus.completed
+
+        self.db.commit()
+
+    def rerun(self, run_id: int) -> IngestionRun | None:
+        run = self.db.get(IngestionRun, run_id)
+        if not run:
+            return None
+
+        batches = (
+            self.db.query(IngestionBatch).filter(IngestionBatch.ingestion_run_id == run.id).all()
+        )
+        batch_ids = [b.id for b in batches]
+        if batch_ids:
+            self.db.query(TaskProposal).filter(
+                TaskProposal.ingestion_batch_id.in_(batch_ids)
+            ).update({"ingestion_batch_id": None}, synchronize_session="fetch")
+
+            for batch in batches:
+                self.db.delete(batch)
+            self.db.flush()
+
+        run.status = RunStatus.running
+        run.started_at = datetime.now(timezone.utc)
+        run.finished_at = None
+        run.error_summary = None
+        self.db.flush()
+
+        self._run_connectors(run)
+        return run
+
+    def delete_run(self, run_id: int) -> bool:
+        """Hard-delete a run and all its batches. Returns False if not found."""
+        run = self.db.get(IngestionRun, run_id)
+        if not run:
+            return False
+
+        batches = (
+            self.db.query(IngestionBatch).filter(IngestionBatch.ingestion_run_id == run.id).all()
+        )
+        batch_ids = [b.id for b in batches]
+        if batch_ids:
+            self.db.query(TaskProposal).filter(
+                TaskProposal.ingestion_batch_id.in_(batch_ids)
+            ).update({"ingestion_batch_id": None}, synchronize_session="fetch")
+
+            for batch in batches:
+                self.db.delete(batch)
+
+        self.db.delete(run)
+        self.db.commit()
+        return True
+
+    def list_runs(self) -> list[IngestionRun]:
+        return (
+            self.db.query(IngestionRun)
+            .options(joinedload(IngestionRun.batches))
+            .order_by(IngestionRun.started_at.desc())
+            .all()
+        )
+
+    def get_run(self, run_id: int) -> IngestionRun | None:
+        return (
+            self.db.query(IngestionRun)
+            .options(joinedload(IngestionRun.batches))
+            .filter(IngestionRun.id == run_id)
+            .first()
+        )

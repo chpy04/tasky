@@ -6,21 +6,71 @@ Endpoints:
     GET    /ingestion/preview/slack    Fetch Slack data and return raw batches  (no DB write)
     GET    /ingestion/preview/canvas   Fetch Canvas data and return raw batches (no DB write)
 
-    POST   /ingestion/run              Trigger a manual ingestion run        [TODO]
-    GET    /ingestion/runs             List ingestion runs                   [TODO]
-    GET    /ingestion/runs/{id}        Get a single run with status          [TODO]
-    GET    /ingestion/batches/{id}     Get batch payload and processing state [TODO]
+    POST   /ingestion/runs             Create and execute an ingestion run
+    GET    /ingestion/runs             List ingestion runs
+    GET    /ingestion/runs/{id}        Get a single run with batch details
+    POST   /ingestion/runs/{id}/rerun  Re-run an existing ingestion run
 """
 
+import time
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.connectors.base import ConnectorResult
+from app.db.session import get_db
 
 router = APIRouter()
 
 _SINCE_DAYS = Query(default=7, ge=1, le=90)
+
+
+# ---------------------------------------------------------------------------
+# Pydantic models
+# ---------------------------------------------------------------------------
+
+
+class CreateRunRequest(BaseModel):
+    start_date: str  # ISO date string e.g. "2026-03-01"
+    end_date: str | None = None  # ISO date string; defaults to now if omitted
+
+
+class BatchResponse(BaseModel):
+    id: int
+    source_type: str
+    raw_payload: str
+    created_at: str
+    status: str
+    item_count: int | None
+    api_calls: int | None
+    duration_ms: float | None
+    llm_cost: float | None
+    found_new_content: bool | None
+    success: bool | None
+    connector_metadata: str | None
+
+
+class RunSummaryResponse(BaseModel):
+    id: int
+    started_at: str
+    finished_at: str | None
+    status: str
+    triggered_by: str
+    range_start: str | None
+    range_end: str | None
+    error_summary: str | None
+    batch_count: int
+
+
+class RunDetailResponse(RunSummaryResponse):
+    batches: list[BatchResponse]
+
+
+# ---------------------------------------------------------------------------
+# Preview endpoints (unchanged)
+# ---------------------------------------------------------------------------
 
 
 def _result_to_response(result: ConnectorResult) -> dict:
@@ -86,25 +136,168 @@ def preview_canvas(since_days: int = _SINCE_DAYS) -> dict:
     return _result_to_response(result)
 
 
-@router.post("/run")
-def trigger_run():
-    # TODO: delegate to IngestionService.trigger_manual_run
-    raise NotImplementedError
+# ---------------------------------------------------------------------------
+# Run endpoints
+# ---------------------------------------------------------------------------
+
+
+def _run_to_summary(run) -> dict:
+    return {
+        "id": run.id,
+        "started_at": run.started_at.isoformat(),
+        "finished_at": run.finished_at.isoformat() if run.finished_at else None,
+        "status": run.status.value,
+        "triggered_by": run.triggered_by.value,
+        "range_start": run.range_start.isoformat() if run.range_start else None,
+        "range_end": run.range_end.isoformat() if run.range_end else None,
+        "error_summary": run.error_summary,
+        "batch_count": len(run.batches),
+        "total_chars": sum(len(b.raw_payload) for b in run.batches),
+    }
+
+
+def _run_to_detail(run) -> dict:
+    summary = _run_to_summary(run)
+    summary["batches"] = [
+        {
+            "id": b.id,
+            "source_type": b.source_type.value,
+            "raw_payload": b.raw_payload,
+            "created_at": b.created_at.isoformat(),
+            "status": b.status.value,
+            "item_count": b.item_count,
+            "api_calls": b.api_calls,
+            "duration_ms": b.duration_ms,
+            "llm_cost": b.llm_cost,
+            "found_new_content": b.found_new_content,
+            "success": b.success,
+            "connector_metadata": b.connector_metadata,
+            "payload_chars": len(b.raw_payload),
+        }
+        for b in run.batches
+    ]
+    return summary
+
+
+@router.post("/runs")
+def create_run(body: CreateRunRequest, db: Session = Depends(get_db)):
+    from app.services.ingestion_service import IngestionService
+
+    range_start = datetime.fromisoformat(body.start_date)
+    range_end = (
+        datetime.fromisoformat(body.end_date) if body.end_date else datetime.now(timezone.utc)
+    )
+    svc = IngestionService(db)
+    run = svc.trigger_run(range_start, range_end)
+    return _run_to_detail(run)
 
 
 @router.get("/runs")
-def list_runs():
-    # TODO: return ingestion run history
-    raise NotImplementedError
+def list_runs(db: Session = Depends(get_db)):
+    from app.services.ingestion_service import IngestionService
+
+    runs = IngestionService(db).list_runs()
+    return [_run_to_summary(r) for r in runs]
 
 
 @router.get("/runs/{run_id}")
-def get_run(run_id: int):
-    # TODO: return run with batch summary
-    raise NotImplementedError
+def get_run(run_id: int, db: Session = Depends(get_db)):
+    from app.services.ingestion_service import IngestionService
+
+    run = IngestionService(db).get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return _run_to_detail(run)
 
 
-@router.get("/batches/{batch_id}")
-def get_batch(batch_id: int):
-    # TODO: return raw batch payload and processing metadata
-    raise NotImplementedError
+@router.post("/runs/{run_id}/rerun")
+def rerun(run_id: int, db: Session = Depends(get_db)):
+    from app.services.ingestion_service import IngestionService
+
+    run = IngestionService(db).rerun(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return _run_to_detail(run)
+
+
+@router.delete("/runs/{run_id}")
+def delete_run(run_id: int, db: Session = Depends(get_db)):
+    from app.services.ingestion_service import IngestionService
+
+    deleted = IngestionService(db).delete_run(run_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Prompt & LLM preview endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/runs/{run_id}/prompt-preview")
+def prompt_preview(run_id: int, db: Session = Depends(get_db)):
+    import tiktoken
+
+    from app.llm.prompt_builder import build_proposal_prompt
+    from app.models.task import Task, TaskStatus
+    from app.services.ingestion_service import IngestionService
+    from app.vault.reader import VaultReader
+
+    run = IngestionService(db).get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    active_tasks = (
+        db.query(Task).filter(Task.status.notin_([TaskStatus.done, TaskStatus.cancelled])).all()
+    )
+
+    vault = VaultReader()
+    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks)
+
+    enc = tiktoken.encoding_for_model("gpt-4o")
+    token_count = len(enc.encode(system_prompt + user_prompt))
+
+    return {
+        "run_id": run.id,
+        "system_prompt": system_prompt,
+        "user_prompt": user_prompt,
+        "token_count": token_count,
+    }
+
+
+@router.post("/runs/{run_id}/llm-preview")
+def llm_preview(run_id: int, db: Session = Depends(get_db)):
+    from app.llm.client import LLMClient, LLMError
+    from app.llm.prompt_builder import build_proposal_prompt
+    from app.models.task import Task, TaskStatus
+    from app.services.ingestion_service import IngestionService
+    from app.vault.reader import VaultReader
+
+    run = IngestionService(db).get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    active_tasks = (
+        db.query(Task).filter(Task.status.notin_([TaskStatus.done, TaskStatus.cancelled])).all()
+    )
+
+    vault = VaultReader()
+    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks)
+
+    try:
+        t0 = time.monotonic()
+        result = LLMClient().generate_proposals_with_meta(system_prompt, user_prompt)
+        duration_ms = round((time.monotonic() - t0) * 1000)
+    except LLMError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+    return {
+        "run_id": run.id,
+        "model": result.model,
+        "proposals": [p.model_dump() for p in result.batch.proposals],
+        "content": result.content,
+        "input_tokens": result.input_tokens,
+        "output_tokens": result.output_tokens,
+        "duration_ms": duration_ms,
+    }

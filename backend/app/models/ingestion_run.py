@@ -9,8 +9,9 @@ Table: ingestion_runs
   finished_at    datetime nullable
   status         enum    running | completed | failed
   triggered_by   enum    manual | scheduled | system
-  source_type    enum    slack | email | calendar | github | mixed
   error_summary  text    nullable
+  range_start    datetime nullable
+  range_end      datetime nullable
 """
 
 import enum
@@ -34,14 +35,6 @@ class TriggeredBy(str, enum.Enum):
     system = "system"
 
 
-class SourceType(str, enum.Enum):
-    slack = "slack"
-    email = "email"
-    calendar = "calendar"
-    github = "github"
-    mixed = "mixed"
-
-
 class IngestionRun(Base):
     __tablename__ = "ingestion_runs"
 
@@ -52,8 +45,9 @@ class IngestionRun(Base):
         Enum(RunStatus), nullable=False, default=RunStatus.running
     )
     triggered_by: Mapped[TriggeredBy] = mapped_column(Enum(TriggeredBy), nullable=False)
-    source_type: Mapped[SourceType] = mapped_column(Enum(SourceType), nullable=False)
     error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    range_start: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    range_end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     batches: Mapped[list["IngestionBatch"]] = relationship(
         "IngestionBatch", back_populates="ingestion_run"
