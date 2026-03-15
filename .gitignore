@@ -10,11 +10,9 @@ dist/
 # Environment
 .env
 
-# Database
-data/*.db
-data/*.db-journal
-data/*.db-shm
-data/*.db-wal
+# Runtime data (db, tokens, etc.) — keep the directory but ignore all contents
+data/*
+!data/.gitkeep
 
 # Frontend
 frontend/node_modules/

@@ -29,7 +29,7 @@ make format > /dev/null 2>&1 || true
 # ── Lint ──────────────────────────────────────────────────────────────────────
 LINT_ERRORS=""
 
-BACKEND_OUT=$(cd backend && uv run ruff check . 2>&1)
+BACKEND_OUT=$(cd backend && uv sync --extra dev -q 2>&1 && uv run ruff check . 2>&1)
 if [ $? -ne 0 ]; then
     LINT_ERRORS="${LINT_ERRORS}=== Backend (ruff) ===\n${BACKEND_OUT}\n\n"
 fi

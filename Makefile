@@ -13,7 +13,7 @@ frontend: ## Start frontend only
 	cd frontend && npm run dev
 
 install: ## Install all dependencies
-	cd backend && uv sync
+	cd backend && uv sync --extra dev
 	cd frontend && npm install
 
 migrate: ## Run database migrations

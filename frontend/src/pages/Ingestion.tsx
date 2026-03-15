@@ -1,8 +1,10 @@
 // src/pages/Ingestion.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { usePreview } from "../api/useIngestion";
 import type { SourceId } from "../api/useIngestion";
+import { useGmailAuth } from "../api/useGmailAuth";
 import styles from "./Ingestion.module.css";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -101,8 +103,16 @@ const SOURCES: SourceConfig[] = [
 
 // ── Source card ────────────────────────────────────────────────────────────────
 
-function SourceCard({ source }: { source: SourceConfig }) {
+interface SourceCardProps {
+  source: SourceConfig;
+  authConnected?: boolean; // undefined = no auth required
+  onConnect?: () => void;
+  connectError?: string | null;
+}
+
+function SourceCard({ source, authConnected, onConnect, connectError }: SourceCardProps) {
   const { mutate, data, isPending, error, isSuccess } = usePreview(source.id);
+  const needsConnect = authConnected === false;
   const [open, setOpen] = useState(false);
 
   const batch = data?.batches[0];
@@ -124,9 +134,15 @@ function SourceCard({ source }: { source: SourceConfig }) {
           <span className={styles.sourceName}>{source.name}</span>
           <span className={styles.sourceDesc}>{source.desc}</span>
         </div>
-        <Button variant="ghost" onClick={() => mutate()} disabled={isPending}>
-          {isPending ? "fetching…" : "fetch"}
-        </Button>
+        {needsConnect ? (
+          <Button variant="primary" onClick={onConnect}>
+            connect
+          </Button>
+        ) : (
+          <Button variant="ghost" onClick={() => mutate()} disabled={isPending}>
+            {isPending ? "fetching…" : "fetch"}
+          </Button>
+        )}
       </div>
 
       <div className={styles.sourceBody}>
@@ -180,7 +196,18 @@ function SourceCard({ source }: { source: SourceConfig }) {
           </>
         )}
 
-        {!isSuccess && !error && !isPending && (
+        {needsConnect && (
+          <>
+            {connectError && (
+              <div className={styles.statusStrip}>
+                <span className={styles.statusError}>✗ {connectError}</span>
+              </div>
+            )}
+            <p className={styles.empty}>connect your {source.name} account to enable ingestion</p>
+          </>
+        )}
+
+        {!needsConnect && !isSuccess && !error && !isPending && (
           <p className={styles.empty}>press fetch to pull data from {source.name}</p>
         )}
       </div>
@@ -191,6 +218,17 @@ function SourceCard({ source }: { source: SourceConfig }) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function Ingestion() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const gmailAuth = useGmailAuth();
+
+  // After OAuth redirect, invalidate status and clear the query param.
+  useEffect(() => {
+    if (searchParams.get("gmail") === "connected") {
+      gmailAuth.invalidate();
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, gmailAuth]);
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -200,7 +238,13 @@ export default function Ingestion() {
 
       <div className={styles.body}>
         {SOURCES.map((source) => (
-          <SourceCard key={source.id} source={source} />
+          <SourceCard
+            key={source.id}
+            source={source}
+            authConnected={source.id === "gmail" ? gmailAuth.connected : undefined}
+            onConnect={source.id === "gmail" ? gmailAuth.connect : undefined}
+            connectError={source.id === "gmail" ? gmailAuth.connectError : undefined}
+          />
         ))}
       </div>
     </div>
