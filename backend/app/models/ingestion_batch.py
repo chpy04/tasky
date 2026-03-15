@@ -17,6 +17,7 @@ Table: ingestion_batches
 TODO: decide per-source normalization strategy before batch creation
       (see technical spec §11 TODO).
 """
+
 import enum
 from datetime import datetime
 
@@ -37,13 +38,19 @@ class IngestionBatch(Base):
     __tablename__ = "ingestion_batches"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    ingestion_run_id: Mapped[int] = mapped_column(Integer, ForeignKey("ingestion_runs.id"), nullable=False)
+    ingestion_run_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("ingestion_runs.id"), nullable=False
+    )
     source_type: Mapped[SourceType] = mapped_column(Enum(SourceType), nullable=False)
     raw_payload: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     processed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    status: Mapped[BatchStatus] = mapped_column(Enum(BatchStatus), nullable=False, default=BatchStatus.pending)
+    status: Mapped[BatchStatus] = mapped_column(
+        Enum(BatchStatus), nullable=False, default=BatchStatus.pending
+    )
     error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     ingestion_run: Mapped["IngestionRun"] = relationship("IngestionRun", back_populates="batches")  # type: ignore[name-defined]
-    proposals: Mapped[list["TaskProposal"]] = relationship("TaskProposal", back_populates="ingestion_batch")  # type: ignore[name-defined]
+    proposals: Mapped[list["TaskProposal"]] = relationship(
+        "TaskProposal", back_populates="ingestion_batch"
+    )  # type: ignore[name-defined]

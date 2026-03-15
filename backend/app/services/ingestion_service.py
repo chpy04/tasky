@@ -13,6 +13,7 @@ Responsibilities:
 TODO: implement retry and concurrency strategy (tech spec §18 TODO)
 TODO: implement per-source acquisition details (tech spec §19 TODO)
 """
+
 from sqlalchemy.orm import Session
 
 

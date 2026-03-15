@@ -8,11 +8,11 @@ TODO: define label/query filters to avoid ingesting noise
 TODO: implement incremental sync via historyId or lastFetched timestamp
 TODO: strip or truncate email bodies before batch storage
 """
+
 import json
 import time
 from datetime import datetime, timezone
 
-from app.config import settings
 from app.connectors.base import BaseConnector, ConnectorResult
 
 _MOCK_EMAILS = [
@@ -54,10 +54,7 @@ class GmailConnector(BaseConnector):
         fetched_at = datetime.now(timezone.utc).isoformat()
         since_iso = since.isoformat()
 
-        emails = [
-            e for e in _MOCK_EMAILS
-            if e["received_at"] >= since_iso
-        ]
+        emails = [e for e in _MOCK_EMAILS if e["received_at"] >= since_iso]
 
         return ConnectorResult(
             success=True,
@@ -77,5 +74,7 @@ class GmailConnector(BaseConnector):
                         "kind": "emails",
                     },
                 }
-            ] if emails else [],
+            ]
+            if emails
+            else [],
         )

@@ -11,6 +11,7 @@ Responsibilities:
 
 These operations delegate to the vault reader for filesystem access.
 """
+
 from app.vault.reader import VaultReader
 
 

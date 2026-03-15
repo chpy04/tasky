@@ -12,6 +12,7 @@ Usage in a route:
     def my_route(db: Session = Depends(get_db)):
         ...
 """
+
 from collections.abc import Generator
 
 from sqlalchemy import create_engine

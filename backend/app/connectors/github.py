@@ -5,6 +5,7 @@ Fetches notification threads relevant to the authenticated user.
 Authentication: personal access token (settings.github_token)
 Sync strategy: uses the `since` datetime passed to fetch().
 """
+
 import json
 import time
 import urllib.error
@@ -49,9 +50,7 @@ class GitHubConnector(BaseConnector):
                 return json.loads(resp.read())
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(
-                f"GitHub API error {exc.code} for {path}: {body}"
-            ) from exc
+            raise RuntimeError(f"GitHub API error {exc.code} for {path}: {body}") from exc
 
     # ── Public interface ──────────────────────────────────────────────────
 
@@ -173,7 +172,7 @@ class GitHubConnector(BaseConnector):
         notifications: list = self._request(  # type: ignore[assignment]
             "/notifications",
             params={
-                "all": "true",    # read and unread
+                "all": "true",  # read and unread
                 "since": since_iso,
                 "per_page": "50",
             },

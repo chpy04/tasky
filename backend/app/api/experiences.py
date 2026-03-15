@@ -7,6 +7,7 @@ Endpoints:
     PATCH  /experiences/{id}     Update experience metadata (active flag, folder path)
     DELETE /experiences/{id}     Deactivate an experience (soft delete)
 """
+
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 

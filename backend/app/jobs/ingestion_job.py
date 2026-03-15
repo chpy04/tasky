@@ -8,6 +8,7 @@ TODO: implement scheduling mechanism (tech spec §18 TODO)
 TODO: implement graceful failure isolation per connector
 TODO: implement rerun support for failed batches without destroying history
 """
+
 from sqlalchemy.orm import Session
 
 from app.services.ingestion_service import IngestionService
@@ -25,5 +26,5 @@ def run_ingestion(db: Session, source_types: list[str] | None = None) -> int:
 
     TODO: implement using IngestionService
     """
-    service = IngestionService(db)
+    _ = IngestionService(db)  # TODO: implement using IngestionService
     raise NotImplementedError

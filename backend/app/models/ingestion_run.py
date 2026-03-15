@@ -12,6 +12,7 @@ Table: ingestion_runs
   source_type    enum    slack | email | calendar | github | mixed
   error_summary  text    nullable
 """
+
 import enum
 from datetime import datetime
 
@@ -47,9 +48,13 @@ class IngestionRun(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    status: Mapped[RunStatus] = mapped_column(Enum(RunStatus), nullable=False, default=RunStatus.running)
+    status: Mapped[RunStatus] = mapped_column(
+        Enum(RunStatus), nullable=False, default=RunStatus.running
+    )
     triggered_by: Mapped[TriggeredBy] = mapped_column(Enum(TriggeredBy), nullable=False)
     source_type: Mapped[SourceType] = mapped_column(Enum(SourceType), nullable=False)
     error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    batches: Mapped[list["IngestionBatch"]] = relationship("IngestionBatch", back_populates="ingestion_run")  # type: ignore[name-defined]
+    batches: Mapped[list["IngestionBatch"]] = relationship(
+        "IngestionBatch", back_populates="ingestion_run"
+    )  # type: ignore[name-defined]

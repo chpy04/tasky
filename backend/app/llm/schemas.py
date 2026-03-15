@@ -8,6 +8,7 @@ TODO: finalise schema fields and required vs optional constraints
 TODO: decide whether to use tool_use, JSON mode, or response_format
       for schema enforcement (tech spec §12 TODO)
 """
+
 from pydantic import BaseModel
 
 from app.models.task import TaskStatus

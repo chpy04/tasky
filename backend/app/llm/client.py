@@ -13,7 +13,6 @@ Responsibilities:
 TODO: decide exact function-calling / structured-output pattern (tech spec §12 TODO)
 TODO: implement retry logic for transient API errors
 """
-from app.config import settings
 
 
 class LLMClient:

@@ -7,11 +7,11 @@ TODO: define which courses to track
 TODO: implement incremental sync (check for new/updated assignments)
 TODO: map Canvas assignment due dates to task due_at field
 """
+
 import json
 import time
 from datetime import datetime, timezone
 
-from app.config import settings
 from app.connectors.base import BaseConnector, ConnectorResult
 
 _MOCK_ITEMS = [
@@ -63,10 +63,7 @@ class CanvasConnector(BaseConnector):
         fetched_at = datetime.now(timezone.utc).isoformat()
         since_iso = since.isoformat()
 
-        items = [
-            i for i in _MOCK_ITEMS
-            if i["updated_at"] >= since_iso
-        ]
+        items = [i for i in _MOCK_ITEMS if i["updated_at"] >= since_iso]
 
         return ConnectorResult(
             success=True,
@@ -86,5 +83,7 @@ class CanvasConnector(BaseConnector):
                         "kind": "assignments",
                     },
                 }
-            ] if items else [],
+            ]
+            if items
+            else [],
         )

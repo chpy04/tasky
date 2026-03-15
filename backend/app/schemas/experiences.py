@@ -1,4 +1,5 @@
 """Pydantic request/response schemas for the experiences API."""
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -22,4 +23,5 @@ class ExperienceResponse(BaseModel):
 
 class ExperienceDetailResponse(ExperienceResponse):
     """Experience metadata plus the content of its vault markdown files."""
+
     vault_context: dict[str, str]

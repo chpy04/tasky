@@ -49,11 +49,7 @@ class VaultReader:
             if dest_file.exists():
                 continue
             template_path = self.root / "Templates" / template_name
-            content = (
-                template_path.read_text(encoding="utf-8")
-                if template_path.exists()
-                else ""
-            )
+            content = template_path.read_text(encoding="utf-8") if template_path.exists() else ""
             dest_file.write_text(content, encoding="utf-8")
 
     def experience_path_exists(self, folder_path: str) -> bool:

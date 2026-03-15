@@ -18,6 +18,7 @@ ConnectorResult fields:
 
 Connectors must not write to tasks or proposals directly.
 """
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime

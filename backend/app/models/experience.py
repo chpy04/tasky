@@ -12,6 +12,7 @@ Table: experiences
 TODO: extend with slug, display_name, category, or ordering once UI
       needs are clearer (see technical spec §7 TODO).
 """
+
 from sqlalchemy import Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

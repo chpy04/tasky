@@ -8,6 +8,7 @@ Endpoints:
 TODO: implement route handlers using ProposalService
 TODO: add POST /proposals/{id}/edit-and-approve once edit UX is designed
 """
+
 from fastapi import APIRouter
 
 router = APIRouter()

@@ -13,6 +13,7 @@ Responsibilities:
 TODO: implement proposal conflict/staleness detection (tech spec §20 TODO)
 TODO: implement edit-before-approve mechanics (tech spec §10 TODO)
 """
+
 from sqlalchemy.orm import Session
 
 

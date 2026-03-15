@@ -8,6 +8,7 @@ Endpoints:
     POST   /tasks/{id}/complete    Mark a task complete and record time spent
     POST   /tasks/{id}/uncomplete  Revert a done task to its prior status
 """
+
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query

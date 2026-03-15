@@ -13,6 +13,7 @@ Responsibilities:
 
 TODO: extend experience metadata model when UI needs evolve (tech spec §7 TODO)
 """
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -39,11 +40,7 @@ class ExperienceService:
 
     def create(self, folder_path: str) -> Experience:
         """Create or reactivate an experience, validating the vault path on new records."""
-        existing = (
-            self.db.query(Experience)
-            .filter(Experience.folder_path == folder_path)
-            .first()
-        )
+        existing = self.db.query(Experience).filter(Experience.folder_path == folder_path).first()
         if existing:
             if existing.active:
                 raise HTTPException(status_code=409, detail="Experience already active")

@@ -12,6 +12,7 @@ The assembled context is passed to LLMClient.generate_proposals().
 TODO: define exact prompt format and context packaging (tech spec §12 TODO)
 TODO: implement token budget management (truncate/prioritize if context is large)
 """
+
 from sqlalchemy.orm import Session
 
 from app.vault.reader import VaultReader

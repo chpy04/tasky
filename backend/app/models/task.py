@@ -19,6 +19,7 @@ Table: tasks
 TODO: clarify exact created_by semantics (see technical spec §8).
 TODO: implement deduplication/reconciliation rules (see technical spec §8 TODO).
 """
+
 import enum
 from datetime import datetime
 
@@ -42,17 +43,31 @@ class Task(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), nullable=False, default=TaskStatus.todo)
-    experience_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("experiences.id"), nullable=True)
+    status: Mapped[TaskStatus] = mapped_column(
+        Enum(TaskStatus), nullable=False, default=TaskStatus.todo
+    )
+    experience_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("experiences.id"), nullable=True
+    )
     due_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
-    parent_task_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("tasks.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+    parent_task_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("tasks.id"), nullable=True
+    )
     created_by: Mapped[str] = mapped_column(String, nullable=False, default="user")
     external_ref: Mapped[str | None] = mapped_column(String, nullable=True)
     time_spent_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     experience: Mapped["Experience | None"] = relationship("Experience", back_populates="tasks")  # type: ignore[name-defined]
     subtasks: Mapped[list["Task"]] = relationship("Task", foreign_keys=[parent_task_id])
-    status_history: Mapped[list["TaskStatusHistory"]] = relationship("TaskStatusHistory", back_populates="task")  # type: ignore[name-defined]
-    proposals: Mapped[list["TaskProposal"]] = relationship("TaskProposal", foreign_keys="TaskProposal.task_id", back_populates="task")  # type: ignore[name-defined]
+    status_history: Mapped[list["TaskStatusHistory"]] = relationship(
+        "TaskStatusHistory", back_populates="task"
+    )  # type: ignore[name-defined]
+    proposals: Mapped[list["TaskProposal"]] = relationship(
+        "TaskProposal", foreign_keys="TaskProposal.task_id", back_populates="task"
+    )  # type: ignore[name-defined]
