@@ -4,7 +4,9 @@
   border: 1px solid #3c3428;
   border-left: 4px solid transparent;
   border-radius: 3px;
-  transition: background 0.12s, border-color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -134,7 +136,7 @@
   transition: all 0.15s;
   margin-top: 2px;
   flex-shrink: 0;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
 }
 .chevron:hover {
   color: #a07840;

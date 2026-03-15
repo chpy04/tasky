@@ -16,7 +16,7 @@
 }
 
 .title {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 20px;
   font-weight: 500;
   color: #e8c070;
@@ -50,7 +50,7 @@
 }
 
 .cardPath {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 11px;
   color: #5a3e22;
   letter-spacing: 0.02em;
@@ -58,7 +58,7 @@
 }
 
 .cardName {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 15px;
   color: #f0ddb8;
   letter-spacing: 0.02em;
@@ -68,7 +68,7 @@
 }
 
 .badge {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -86,26 +86,26 @@
 }
 
 .confirmLabel {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   color: #8a7058;
 }
 
 .cardError {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   color: #c84040;
 }
 
 .empty {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 15px;
   color: #5a3e22;
   margin: 0;
 }
 
 .loadError {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 15px;
   color: #c84040;
   margin: 0 0 16px 0;
@@ -119,7 +119,7 @@
 }
 
 .label {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   color: #8a7058;
   letter-spacing: 0.04em;
@@ -130,7 +130,7 @@
   border: 1px solid #2a1810;
   border-radius: 3px;
   color: #f0ddb8;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 15px;
   padding: 8px 12px;
   outline: none;
@@ -143,7 +143,7 @@
 }
 
 .hint {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 12px;
   color: #5a3e22;
   margin: 0;
@@ -154,7 +154,7 @@
 }
 
 .formError {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   color: #c84040;
   margin: 0;

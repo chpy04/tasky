@@ -67,7 +67,12 @@ def preview_slack(since_days: int = _SINCE_DAYS) -> dict:
     from app.connectors.slack import SlackConnector
 
     since = datetime.now(timezone.utc) - timedelta(days=since_days)
-    result = SlackConnector().fetch(since)
+    try:
+        result = SlackConnector().fetch(since)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     return _result_to_response(result)
 
 

@@ -30,7 +30,7 @@
 }
 
 .headerTitle {
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-style: italic;
   font-size: 19px;
   color: #c0a878;
@@ -41,7 +41,7 @@
   background: #171410;
   border: 1px solid #3c3428;
   color: #907a58;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   padding: 2px 9px;
   border-radius: 3px;
@@ -57,11 +57,15 @@
   scrollbar-width: thin;
   scrollbar-color: #3c3428 transparent;
 }
-.body::-webkit-scrollbar { width: 4px; }
-.body::-webkit-scrollbar-thumb { background: #3c3428; }
+.body::-webkit-scrollbar {
+  width: 4px;
+}
+.body::-webkit-scrollbar-thumb {
+  background: #3c3428;
+}
 
 .empty {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 15px;
   color: #5e4e38;
   text-align: center;
@@ -78,10 +82,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
 }
 .doneDivider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: #1f1c14;

@@ -1,28 +1,32 @@
 // src/pages/Experiences.tsx
-import { useState } from 'react'
-import { useExperiences, useCreateExperience, useDeactivateExperience } from '../api/useExperiences'
-import Modal from '../components/ui/Modal'
-import Button from '../components/ui/Button'
-import { formatExperienceName } from '../utils/formatters'
-import { getExperienceColor } from '../theme'
-import type { Experience } from '../types'
-import styles from './Experiences.module.css'
+import { useState } from "react";
+import {
+  useExperiences,
+  useCreateExperience,
+  useDeactivateExperience,
+} from "../api/useExperiences";
+import Modal from "../components/ui/Modal";
+import Button from "../components/ui/Button";
+import { formatExperienceName } from "../utils/formatters";
+import { getExperienceColor } from "../theme";
+import type { Experience } from "../types";
+import styles from "./Experiences.module.css";
 
 function ExperienceCard({ exp }: { exp: Experience }) {
-  const [confirming, setConfirming] = useState(false)
-  const deactivate = useDeactivateExperience()
-  const activate = useCreateExperience()
+  const [confirming, setConfirming] = useState(false);
+  const deactivate = useDeactivateExperience();
+  const activate = useCreateExperience();
 
   const handleConfirmDeactivate = () => {
-    deactivate.mutate(exp.id, { onSettled: () => setConfirming(false) })
-  }
+    deactivate.mutate(exp.id, { onSettled: () => setConfirming(false) });
+  };
 
-  const accentColor = getExperienceColor(exp.id)
+  const accentColor = getExperienceColor(exp.id);
   const mutationError = deactivate.isError
     ? (deactivate.error as Error).message
     : activate.isError
-    ? (activate.error as Error).message
-    : null
+      ? (activate.error as Error).message
+      : null;
 
   return (
     <div className={styles.card} style={{ borderLeftColor: accentColor }}>
@@ -30,25 +34,34 @@ function ExperienceCard({ exp }: { exp: Experience }) {
         <span className={styles.cardName}>{formatExperienceName(exp.folder_path)}</span>
         <span
           className={styles.badge}
-          style={{ color: exp.active ? '#72a848' : '#6a5038', borderColor: exp.active ? '#72a848' : '#3e2810' }}
+          style={{
+            color: exp.active ? "#72a848" : "#6a5038",
+            borderColor: exp.active ? "#72a848" : "#3e2810",
+          }}
         >
-          {exp.active ? 'active' : 'inactive'}
+          {exp.active ? "active" : "inactive"}
         </span>
         <span className={styles.cardPath}>{exp.folder_path}</span>
       </div>
 
       <div className={styles.cardActions}>
-        {mutationError && !confirming && (
-          <span className={styles.cardError}>{mutationError}</span>
-        )}
+        {mutationError && !confirming && <span className={styles.cardError}>{mutationError}</span>}
         {exp.active ? (
           confirming ? (
             <>
               <span className={styles.confirmLabel}>Deactivate?</span>
-              <Button variant="danger" onClick={handleConfirmDeactivate} disabled={deactivate.isPending}>
+              <Button
+                variant="danger"
+                onClick={handleConfirmDeactivate}
+                disabled={deactivate.isPending}
+              >
                 Confirm
               </Button>
-              <Button variant="ghost" onClick={() => setConfirming(false)} disabled={deactivate.isPending}>
+              <Button
+                variant="ghost"
+                onClick={() => setConfirming(false)}
+                disabled={deactivate.isPending}
+              >
                 Cancel
               </Button>
             </>
@@ -68,31 +81,31 @@ function ExperienceCard({ exp }: { exp: Experience }) {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function CreateModal({ onClose }: { onClose: () => void }) {
-  const [folderPath, setFolderPath] = useState('')
-  const create = useCreateExperience()
+  const [folderPath, setFolderPath] = useState("");
+  const create = useCreateExperience();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!folderPath.trim()) return
-    create.mutate(folderPath.trim(), { onSuccess: onClose })
-  }
+    e.preventDefault();
+    if (!folderPath.trim()) return;
+    create.mutate(folderPath.trim(), { onSuccess: onClose });
+  };
 
   return (
     <Modal
       title="New Experience"
       onClose={onClose}
       actions={[
-        { label: 'Cancel', variant: 'ghost', onClick: onClose },
+        { label: "Cancel", variant: "ghost", onClick: onClose },
         {
-          label: create.isPending ? 'Creating…' : 'Create',
-          variant: 'primary',
+          label: create.isPending ? "Creating…" : "Create",
+          variant: "primary",
           onClick: () => {
-            const form = document.getElementById('create-exp-form') as HTMLFormElement | null
-            form?.requestSubmit()
+            const form = document.getElementById("create-exp-form") as HTMLFormElement | null;
+            form?.requestSubmit();
           },
         },
       ]}
@@ -106,24 +119,22 @@ function CreateModal({ onClose }: { onClose: () => void }) {
           className={styles.input}
           type="text"
           value={folderPath}
-          onChange={e => setFolderPath(e.target.value)}
+          onChange={(e) => setFolderPath(e.target.value)}
           placeholder="e.g. electric_racing"
           autoComplete="off"
         />
         <p className={styles.hint}>
           Relative to <code>vault/Experiences/</code> — the folder must already exist.
         </p>
-        {create.isError && (
-          <p className={styles.formError}>{(create.error as Error).message}</p>
-        )}
+        {create.isError && <p className={styles.formError}>{(create.error as Error).message}</p>}
       </form>
     </Modal>
-  )
+  );
 }
 
 export default function Experiences() {
-  const [showCreate, setShowCreate] = useState(false)
-  const { data: experiences = [], isLoading, isError } = useExperiences()
+  const [showCreate, setShowCreate] = useState(false);
+  const { data: experiences = [], isLoading, isError } = useExperiences();
 
   return (
     <div className={styles.page}>
@@ -134,9 +145,7 @@ export default function Experiences() {
         </Button>
       </div>
 
-      {isError && (
-        <p className={styles.loadError}>Failed to load experiences.</p>
-      )}
+      {isError && <p className={styles.loadError}>Failed to load experiences.</p>}
 
       {isLoading ? (
         <p className={styles.empty}>Loading…</p>
@@ -146,7 +155,7 @@ export default function Experiences() {
         <div className={styles.list}>
           {[...experiences]
             .sort((a, b) => Number(b.active) - Number(a.active))
-            .map(exp => (
+            .map((exp) => (
               <ExperienceCard key={exp.id} exp={exp} />
             ))}
         </div>
@@ -154,5 +163,5 @@ export default function Experiences() {
 
       {showCreate && <CreateModal onClose={() => setShowCreate(false)} />}
     </div>
-  )
+  );
 }

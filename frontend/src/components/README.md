@@ -17,6 +17,7 @@ Shared UI components used across multiple pages.
 ## TODO
 
 Components will be added as pages are implemented. Likely candidates:
+
 - `TaskCard` — displays a single task with status badge and priority
 - `ProposalCard` — displays a proposal with approve/reject actions
 - `StatusBadge` — colored badge for task/proposal status enum values

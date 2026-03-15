@@ -1,35 +1,30 @@
 // src/components/tasks/TaskDetail.tsx
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import remarkBreaks from 'remark-breaks'
-import rehypeRaw from 'rehype-raw'
-import type { Task, TaskStatus } from '../../types'
-import styles from './TaskDetail.module.css'
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
+import rehypeRaw from "rehype-raw";
+import type { Task, TaskStatus } from "../../types";
+import styles from "./TaskDetail.module.css";
 
 function applyHighlight(text: string): string {
-  return text.replace(/==(.+?)==/g, '<mark>$1</mark>')
+  return text.replace(/==(.+?)==/g, "<mark>$1</mark>");
 }
 
 interface TaskDetailProps {
-  task: Task
-  onEdit: (task: Task) => void
-  onComplete: (id: number) => void
-  onStatusChange: (id: number, status: TaskStatus) => void
+  task: Task;
+  onEdit: (task: Task) => void;
+  onComplete: (id: number) => void;
+  onStatusChange: (id: number, status: TaskStatus) => void;
 }
 
-export default function TaskDetail({
-  task,
-  onEdit,
-  onComplete,
-  onStatusChange,
-}: TaskDetailProps) {
+export default function TaskDetail({ task, onEdit, onComplete, onStatusChange }: TaskDetailProps) {
   const STATUS_LABELS: Record<string, string> = {
-    todo: 'To Do',
-    in_progress: 'In Progress',
-    blocked: 'Blocked',
-    done: 'Done',
-    cancelled: 'Cancelled',
-  }
+    todo: "To Do",
+    in_progress: "In Progress",
+    blocked: "Blocked",
+    done: "Done",
+    cancelled: "Cancelled",
+  };
 
   return (
     <div className={styles.detail}>
@@ -64,21 +59,21 @@ export default function TaskDetail({
           Edit
         </button>
 
-        {task.status === 'blocked' && (
-          <button
-            className={styles.btn}
-            onClick={() => onStatusChange(task.id, 'todo')}
-          >
+        {task.status === "blocked" && (
+          <button className={styles.btn} onClick={() => onStatusChange(task.id, "todo")}>
             Unblock
           </button>
         )}
 
-        {task.status !== 'done' && (
-          <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => onComplete(task.id)}>
+        {task.status !== "done" && (
+          <button
+            className={`${styles.btn} ${styles.btnPrimary}`}
+            onClick={() => onComplete(task.id)}
+          >
             Mark done
           </button>
         )}
       </div>
     </div>
-  )
+  );
 }

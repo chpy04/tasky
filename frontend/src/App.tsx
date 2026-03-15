@@ -1,12 +1,12 @@
 // src/App.tsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import AppShell from './components/layout/AppShell'
-import Tasks from './pages/Tasks'
-import Proposals from './pages/Proposals'
-import Ingestion from './pages/Ingestion'
-import Experiences from './pages/Experiences'
-import Prompts from './pages/Prompts'
-import Settings from './pages/Settings'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AppShell from "./components/layout/AppShell";
+import Tasks from "./pages/Tasks";
+import Proposals from "./pages/Proposals";
+import Ingestion from "./pages/Ingestion";
+import Experiences from "./pages/Experiences";
+import Prompts from "./pages/Prompts";
+import Settings from "./pages/Settings";
 
 export default function App() {
   return (
@@ -22,5 +22,5 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
-  )
+  );
 }

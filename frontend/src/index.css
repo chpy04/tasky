@@ -1,7 +1,9 @@
 /* src/index.css */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap");
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -9,7 +11,7 @@
 
 body {
   background: #15120c;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   color: #f0ddb8;
   height: 100vh;
   overflow: hidden;

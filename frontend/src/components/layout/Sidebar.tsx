@@ -1,43 +1,54 @@
 // src/components/layout/Sidebar.tsx
-import type { ReactNode } from 'react'
-import { NavLink } from 'react-router-dom'
-import styles from './Sidebar.module.css'
+import type { ReactNode } from "react";
+import { NavLink } from "react-router-dom";
+import styles from "./Sidebar.module.css";
 
 function TasksIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <rect x="1" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.2"/>
-      <rect x="8" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.2"/>
-      <rect x="1" y="8" width="5" height="5" stroke="currentColor" strokeWidth="1.2"/>
-      <rect x="8" y="8" width="5" height="5" stroke="currentColor" strokeWidth="1.2"/>
+      <rect x="1" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="8" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="1" y="8" width="5" height="5" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="8" y="8" width="5" height="5" stroke="currentColor" strokeWidth="1.2" />
     </svg>
-  )
+  );
 }
 
 function ExperiencesIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2"/>
-      <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" />
     </svg>
-  )
+  );
 }
 
 function IngestionIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path d="M7 1v12M3 5l4-4 4 4M3 9l4 4 4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path
+        d="M7 1v12M3 5l4-4 4 4M3 9l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
-  )
+  );
 }
 
 function SettingsIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2"/>
-      <path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.93 2.93l1.41 1.41M9.66 9.66l1.41 1.41M2.93 11.07l1.41-1.41M9.66 4.34l1.41-1.41" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" />
+      <path
+        d="M7 1v2M7 11v2M1 7h2M11 7h2M2.93 2.93l1.41 1.41M9.66 9.66l1.41 1.41M2.93 11.07l1.41-1.41M9.66 4.34l1.41-1.41"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function NavIcon({
@@ -46,23 +57,21 @@ function NavIcon({
   children,
   end = false,
 }: {
-  to: string
-  label: string
-  children: ReactNode
-  end?: boolean
+  to: string;
+  label: string;
+  children: ReactNode;
+  end?: boolean;
 }) {
   return (
     <NavLink
       to={to}
       end={end}
       title={label}
-      className={({ isActive }) =>
-        `${styles.navIcon} ${isActive ? styles.active : ''}`
-      }
+      className={({ isActive }) => `${styles.navIcon} ${isActive ? styles.active : ""}`}
     >
       {children}
     </NavLink>
-  )
+  );
 }
 
 export default function Sidebar() {
@@ -82,5 +91,5 @@ export default function Sidebar() {
         <SettingsIcon />
       </NavIcon>
     </nav>
-  )
+  );
 }

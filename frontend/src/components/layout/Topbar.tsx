@@ -1,7 +1,6 @@
 // src/components/layout/Topbar.tsx
 import { useNavigate } from "react-router-dom";
 import type { Task } from "../../types";
-import Button from "../ui/Button";
 import styles from "./Topbar.module.css";
 
 interface TopbarProps {
@@ -12,12 +11,7 @@ interface TopbarProps {
 function LogoCup() {
   return (
     <svg className={styles.logoCup} viewBox="0 0 30 30" fill="none">
-      <path
-        d="M6 10h18l-2 12H8L6 10z"
-        stroke="#5a3e22"
-        strokeWidth="1"
-        fill="#1e1208"
-      />
+      <path d="M6 10h18l-2 12H8L6 10z" stroke="#5a3e22" strokeWidth="1" fill="#1e1208" />
       <path
         d="M20 10c0 0 3 0 3 3s-3 3-3 3"
         stroke="#5a3e22"
@@ -33,12 +27,7 @@ function LogoCup() {
         strokeLinecap="round"
       />
       <ellipse cx="14" cy="13" rx="4" ry="1.5" fill="#2e1a08" />
-      <path
-        d="M9 13c1 1 3 2 5 2s4-1 5-2"
-        stroke="#3a2210"
-        strokeWidth="0.75"
-        fill="none"
-      />
+      <path d="M9 13c1 1 3 2 5 2s4-1 5-2" stroke="#3a2210" strokeWidth="0.75" fill="none" />
     </svg>
   );
 }
@@ -49,9 +38,7 @@ export default function Topbar({ tasks, onNewTask }: TopbarProps) {
   const openCount = tasks.filter((t) =>
     ["todo", "in_progress", "blocked"].includes(t.status),
   ).length;
-  const inProgressCount = tasks.filter(
-    (t) => t.status === "in_progress",
-  ).length;
+  const inProgressCount = tasks.filter((t) => t.status === "in_progress").length;
 
   return (
     <div className={styles.topbar}>
@@ -77,10 +64,7 @@ export default function Topbar({ tasks, onNewTask }: TopbarProps) {
       </div>
 
       <div className={styles.right}>
-        <button
-          className={styles.aiPill}
-          onClick={() => navigate("/proposals")}
-        >
+        <button className={styles.aiPill} onClick={() => navigate("/proposals")}>
           <span className={styles.aiDot} />0 proposals to review
         </button>
         <button className={styles.addTaskBtn} onClick={onNewTask}>

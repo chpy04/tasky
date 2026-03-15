@@ -1,9 +1,9 @@
 // src/pages/Ingestion.tsx
-import { useState } from 'react'
-import Button from '../components/ui/Button'
-import { usePreview } from '../api/useIngestion'
-import type { SourceId } from '../api/useIngestion'
-import styles from './Ingestion.module.css'
+import { useState } from "react";
+import Button from "../components/ui/Button";
+import { usePreview } from "../api/useIngestion";
+import type { SourceId } from "../api/useIngestion";
+import styles from "./Ingestion.module.css";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -15,89 +15,106 @@ function GitHubIcon() {
         fill="currentColor"
       />
     </svg>
-  )
+  );
 }
 
 function GmailIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-      <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h9A1.5 1.5 0 0 1 13 3.5v7A1.5 1.5 0 0 1 11.5 12h-9A1.5 1.5 0 0 1 1 10.5v-7Z" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <path d="M1.5 3.5 7 7.5l5.5-4" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+      <path
+        d="M1 3.5A1.5 1.5 0 0 1 2.5 2h9A1.5 1.5 0 0 1 13 3.5v7A1.5 1.5 0 0 1 11.5 12h-9A1.5 1.5 0 0 1 1 10.5v-7Z"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+      <path
+        d="M1.5 3.5 7 7.5l5.5-4"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+        strokeLinecap="round"
+      />
     </svg>
-  )
+  );
 }
 
 function SlackIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-      <rect x="5" y="1" width="2" height="5" rx="1" fill="currentColor"/>
-      <rect x="7" y="5" width="5" height="2" rx="1" fill="currentColor"/>
-      <rect x="7" y="8" width="2" height="5" rx="1" fill="currentColor"/>
-      <rect x="2" y="7" width="5" height="2" rx="1" fill="currentColor"/>
+      <rect x="5" y="1" width="2" height="5" rx="1" fill="currentColor" />
+      <rect x="7" y="5" width="5" height="2" rx="1" fill="currentColor" />
+      <rect x="7" y="8" width="2" height="5" rx="1" fill="currentColor" />
+      <rect x="2" y="7" width="5" height="2" rx="1" fill="currentColor" />
     </svg>
-  )
+  );
 }
 
 function CanvasIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <path d="M4.5 7h5M7 4.5v5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1" fill="none" />
+      <path d="M4.5 7h5M7 4.5v5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
     </svg>
-  )
+  );
 }
 
 // ── Source config ──────────────────────────────────────────────────────────────
 
 interface SourceConfig {
-  id: SourceId
-  name: string
-  desc: string
-  icon: React.ReactNode
-  emptyText: string
+  id: SourceId;
+  name: string;
+  desc: string;
+  icon: React.ReactNode;
+  emptyText: string;
 }
 
 const SOURCES: SourceConfig[] = [
   {
-    id: 'github',
-    name: 'GitHub',
-    desc: 'notifications · last 7 days',
+    id: "github",
+    name: "GitHub",
+    desc: "notifications · last 7 days",
     icon: <GitHubIcon />,
-    emptyText: 'no notifications in the last 7 days',
+    emptyText: "no notifications in the last 7 days",
   },
   {
-    id: 'gmail',
-    name: 'Gmail',
-    desc: 'actionable emails · last 7 days',
+    id: "gmail",
+    name: "Gmail",
+    desc: "actionable emails · last 7 days",
     icon: <GmailIcon />,
-    emptyText: 'no emails in the last 7 days',
+    emptyText: "no emails in the last 7 days",
   },
   {
-    id: 'slack',
-    name: 'Slack',
-    desc: 'channel messages · last 7 days',
+    id: "slack",
+    name: "Slack",
+    desc: "channel messages · last 7 days",
     icon: <SlackIcon />,
-    emptyText: 'no messages in the last 7 days',
+    emptyText: "no messages in the last 7 days",
   },
   {
-    id: 'canvas',
-    name: 'Canvas',
-    desc: 'assignments & announcements · last 7 days',
+    id: "canvas",
+    name: "Canvas",
+    desc: "assignments & announcements · last 7 days",
     icon: <CanvasIcon />,
-    emptyText: 'no updates in the last 7 days',
+    emptyText: "no updates in the last 7 days",
   },
-]
+];
 
 // ── Source card ────────────────────────────────────────────────────────────────
 
 function SourceCard({ source }: { source: SourceConfig }) {
-  const { mutate, data, isPending, error, isSuccess } = usePreview(source.id)
-  const [open, setOpen] = useState(false)
+  const { mutate, data, isPending, error, isSuccess } = usePreview(source.id);
+  const [open, setOpen] = useState(false);
 
-  const batch = data?.batches[0]
-  const parsed = batch ? (() => {
-    try { return JSON.parse(batch.payload) } catch { return batch.payload }
-  })() : null
+  const batch = data?.batches[0];
+  const parsed = batch
+    ? (() => {
+        try {
+          return JSON.parse(batch.payload);
+        } catch {
+          return batch.payload;
+        }
+      })()
+    : null;
 
   return (
     <div className={styles.sourceCard}>
@@ -108,7 +125,7 @@ function SourceCard({ source }: { source: SourceConfig }) {
           <span className={styles.sourceDesc}>{source.desc}</span>
         </div>
         <Button variant="ghost" onClick={() => mutate()} disabled={isPending}>
-          {isPending ? 'fetching…' : 'fetch'}
+          {isPending ? "fetching…" : "fetch"}
         </Button>
       </div>
 
@@ -130,9 +147,10 @@ function SourceCard({ source }: { source: SourceConfig }) {
               ) : (
                 <span className={styles.statusMeta}>
                   {data.item_count} items
-                  {' · '}{data.api_calls} api calls
-                  {' · '}{(data.duration_ms / 1000).toFixed(2)}s
-                  {' · '}${data.llm_cost.toFixed(4)}
+                  {" · "}
+                  {data.api_calls} api calls
+                  {" · "}
+                  {(data.duration_ms / 1000).toFixed(2)}s{" · "}${data.llm_cost.toFixed(4)}
                   {batch && <> · {batch.payload.length.toLocaleString()} chars</>}
                   {batch && <> · since {new Date(batch.metadata.since).toLocaleDateString()}</>}
                 </span>
@@ -141,23 +159,23 @@ function SourceCard({ source }: { source: SourceConfig }) {
 
             {data.item_count === 0 ? (
               <p className={styles.empty}>{source.emptyText}</p>
-            ) : batch && (
-              <div className={styles.batchBlock}>
-                <button
-                  className={styles.payloadToggle}
-                  onClick={() => setOpen(o => !o)}
-                  aria-expanded={open}
-                >
-                  <span className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}>▶</span>
-                  payload ({data.item_count} {batch.metadata.kind})
-                </button>
+            ) : (
+              batch && (
+                <div className={styles.batchBlock}>
+                  <button
+                    className={styles.payloadToggle}
+                    onClick={() => setOpen((o) => !o)}
+                    aria-expanded={open}
+                  >
+                    <span className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`}>▶</span>
+                    payload ({data.item_count} {batch.metadata.kind})
+                  </button>
 
-                {open && (
-                  <pre className={styles.payloadPre}>
-                    {JSON.stringify(parsed, null, 2)}
-                  </pre>
-                )}
-              </div>
+                  {open && (
+                    <pre className={styles.payloadPre}>{JSON.stringify(parsed, null, 2)}</pre>
+                  )}
+                </div>
+              )
             )}
           </>
         )}
@@ -167,7 +185,7 @@ function SourceCard({ source }: { source: SourceConfig }) {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
@@ -181,10 +199,10 @@ export default function Ingestion() {
       </div>
 
       <div className={styles.body}>
-        {SOURCES.map(source => (
+        {SOURCES.map((source) => (
           <SourceCard key={source.id} source={source} />
         ))}
       </div>
     </div>
-  )
+  );
 }

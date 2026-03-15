@@ -13,14 +13,34 @@
   padding: 3px 9px;
   border-radius: 3px;
   border: 1px solid currentColor;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
 }
 
-.status_todo        { color: #7e8c60; border-color: #4a5438; background: rgba(122, 140, 88, 0.1); }
-.status_in_progress { color: #c8a050; border-color: #7a5f28; background: rgba(200, 160, 80, 0.1); }
-.status_blocked     { color: #c05050; border-color: #7a3030; background: rgba(192, 80, 80, 0.1); }
-.status_done        { color: #607850; border-color: #3c5030; background: rgba(96, 120, 80, 0.1); }
-.status_cancelled   { color: #605848; border-color: #3c3428; background: rgba(96, 88, 72, 0.1); }
+.status_todo {
+  color: #7e8c60;
+  border-color: #4a5438;
+  background: rgba(122, 140, 88, 0.1);
+}
+.status_in_progress {
+  color: #c8a050;
+  border-color: #7a5f28;
+  background: rgba(200, 160, 80, 0.1);
+}
+.status_blocked {
+  color: #c05050;
+  border-color: #7a3030;
+  background: rgba(192, 80, 80, 0.1);
+}
+.status_done {
+  color: #607850;
+  border-color: #3c5030;
+  background: rgba(96, 120, 80, 0.1);
+}
+.status_cancelled {
+  color: #605848;
+  border-color: #3c3428;
+  background: rgba(96, 88, 72, 0.1);
+}
 
 .detail {
   border-top: 1px solid #3c3428;
@@ -99,7 +119,7 @@
   background: transparent;
   border: 1px solid #3c3428;
   color: #907a58;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -116,7 +136,7 @@
 .btnPrimary {
   border-color: #b09040;
   color: #e8c070;
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-style: italic;
   font-size: 16px;
   letter-spacing: 0.02em;

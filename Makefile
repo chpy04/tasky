@@ -1,4 +1,4 @@
-.PHONY: dev backend frontend install migrate
+.PHONY: dev backend frontend install migrate format
 
 dev: ## Start backend and frontend concurrently
 	@trap 'kill 0' SIGINT; \
@@ -18,3 +18,7 @@ install: ## Install all dependencies
 
 migrate: ## Run database migrations
 	cd backend && uv run alembic upgrade head
+
+format: ## Auto-format backend (ruff) and frontend (prettier)
+	cd backend && uv run ruff format .
+	cd frontend && npm run format

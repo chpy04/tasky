@@ -10,7 +10,7 @@
   background: rgba(200, 64, 64, 0.12);
   border-bottom: 1px solid rgba(200, 64, 64, 0.25);
   color: #c84040;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 16px;
   padding: 12px 33px;
   display: flex;
@@ -23,14 +23,16 @@
   background: transparent;
   border: 1px solid rgba(200, 64, 64, 0.4);
   color: #c84040;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 15px;
   padding: 3px 12px;
   cursor: pointer;
   border-radius: 3px;
   letter-spacing: 0.06em;
 }
-.retryBtn:hover { background: rgba(200, 64, 64, 0.08); }
+.retryBtn:hover {
+  background: rgba(200, 64, 64, 0.08);
+}
 
 .boardWrapper {
   display: flex;
@@ -44,6 +46,11 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }

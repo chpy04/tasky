@@ -32,7 +32,7 @@
 }
 
 .title {
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-style: italic;
   font-size: 22px;
   color: #e8c070;
@@ -50,7 +50,9 @@
   padding: 6px 9px;
   border-radius: 3px;
 }
-.closeBtn:hover { color: #a07840; }
+.closeBtn:hover {
+  color: #a07840;
+}
 
 .body {
   padding: 27px;

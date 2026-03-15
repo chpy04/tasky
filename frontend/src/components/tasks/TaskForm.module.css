@@ -18,7 +18,7 @@
 }
 
 .label {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -32,7 +32,7 @@
   border: 1px solid #3c3428;
   border-radius: 3px;
   color: #f0ddb8;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 16px;
   padding: 10px 13px;
   transition: border-color 0.12s;
@@ -56,7 +56,7 @@
 }
 
 /* date input calendar icon colour (webkit) */
-.input[type='date']::-webkit-calendar-picker-indicator {
+.input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0.3) sepia(1) saturate(2) hue-rotate(10deg);
   cursor: pointer;
 }
@@ -87,7 +87,7 @@
   background: transparent;
   border: 1px solid #3c3428;
   color: #907a58;
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -105,13 +105,16 @@
   background: #e8c070;
   border: none;
   color: #100e08;
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-style: italic;
   font-size: 19px;
   padding: 10px 27px;
   cursor: pointer;
   border-radius: 3px;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 .submitBtn:hover:not(:disabled) {
   background: #f5d47e;

@@ -1,6 +1,6 @@
 /* src/components/ui/Button.module.css */
 .btn {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -29,7 +29,7 @@
 
 /* primary — main call to action (Playfair italic) */
 .primary {
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-style: italic;
   font-size: 16px;
   letter-spacing: 0.02em;
