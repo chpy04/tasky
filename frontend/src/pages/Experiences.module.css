@@ -1,0 +1,161 @@
+/* src/pages/Experiences.module.css */
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 32px 40px;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  color: #e8c070;
+  margin: 0;
+  letter-spacing: 0.04em;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: #201408;
+  border: 1px solid #362010;
+  border-left: 3px solid #c4782a;
+  border-radius: 4px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cardMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cardPath {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #5a3e22;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.cardName {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  color: #f0ddb8;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid;
+  padding: 2px 7px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.confirmLabel {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #8a7058;
+}
+
+.cardError {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #c84040;
+}
+
+.empty {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  color: #5a3e22;
+  margin: 0;
+}
+
+.loadError {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  color: #c84040;
+  margin: 0 0 16px 0;
+}
+
+/* Create modal form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #8a7058;
+  letter-spacing: 0.04em;
+}
+
+.input {
+  background: #120c05;
+  border: 1px solid #2a1810;
+  border-radius: 3px;
+  color: #f0ddb8;
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  padding: 8px 12px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #e8c070;
+}
+
+.hint {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: #5a3e22;
+  margin: 0;
+}
+
+.hint code {
+  color: #8a7058;
+}
+
+.formError {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #c84040;
+  margin: 0;
+}

@@ -1,0 +1,15 @@
+/* src/components/layout/AppShell.module.css */
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #15120c;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}

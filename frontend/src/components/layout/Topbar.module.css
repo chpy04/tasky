@@ -1,0 +1,143 @@
+/* src/components/layout/Topbar.module.css */
+.topbar {
+  background: #100e08;
+  border-bottom: 2px solid #4a4030;
+  padding: 0 33px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 27px;
+  padding: 18px 0;
+}
+
+.logoLockup {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.logoCup {
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+}
+
+.logoText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.logoMain {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 25px;
+  color: #e8c070;
+  letter-spacing: 0.02em;
+}
+
+.logoSub {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: #7e6a48;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.divider {
+  width: 1px;
+  background: #3c3428;
+  margin: 15px 0;
+  flex-shrink: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 3px;
+}
+
+.statNum {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  color: #e8c070;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #7e6a48;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 18px 0;
+  flex-shrink: 0;
+}
+
+.aiPill {
+  background: rgba(90, 140, 55, 0.15);
+  border: 1px solid rgba(120, 180, 70, 0.3);
+  color: rgba(155, 220, 95, 0.9);
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  padding: 9px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.aiPill:hover {
+  background: rgba(90, 140, 55, 0.25);
+}
+
+.aiDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(155, 220, 95, 0.9);
+  flex-shrink: 0;
+}
+
+.addTaskBtn {
+  background: #e8c070;
+  border: none;
+  color: #100e08;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 19px;
+  letter-spacing: 0.03em;
+  padding: 10px 24px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.addTaskBtn:hover {
+  background: #f5d47e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(232, 192, 112, 0.35);
+}
+.addTaskBtn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}

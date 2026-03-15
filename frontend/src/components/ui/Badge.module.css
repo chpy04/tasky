@@ -1,0 +1,20 @@
+/* src/components/ui/Badge.module.css */
+.experienceBadge {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #907a58;
+  background: #141209;
+  border: 1px solid #3c3428;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.priorityDot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

@@ -1,0 +1,127 @@
+/* src/components/tasks/TaskDetail.module.css */
+.metaRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.statusTag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  font-family: 'DM Mono', monospace;
+}
+
+.status_todo        { color: #7e8c60; border-color: #4a5438; background: rgba(122, 140, 88, 0.1); }
+.status_in_progress { color: #c8a050; border-color: #7a5f28; background: rgba(200, 160, 80, 0.1); }
+.status_blocked     { color: #c05050; border-color: #7a3030; background: rgba(192, 80, 80, 0.1); }
+.status_done        { color: #607850; border-color: #3c5030; background: rgba(96, 120, 80, 0.1); }
+.status_cancelled   { color: #605848; border-color: #3c3428; background: rgba(96, 88, 72, 0.1); }
+
+.detail {
+  border-top: 1px solid #3c3428;
+  padding: 15px 18px 18px 51px;
+  background: #141209;
+}
+
+.desc {
+  font-size: 16px;
+  color: #b09870;
+  line-height: 1.8;
+  margin-bottom: 15px;
+}
+
+.desc p {
+  margin: 0 0 8px 0;
+}
+
+.desc p:last-child {
+  margin-bottom: 0;
+}
+
+.desc a {
+  color: #c8a050;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.desc a:hover {
+  color: #e8c070;
+}
+
+.desc strong {
+  color: #d4b888;
+  font-weight: 600;
+}
+
+.desc mark {
+  background: rgba(200, 160, 60, 0.25);
+  color: #e8c870;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.rowLabel {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7e6a48;
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 66px;
+}
+
+.rowVal {
+  font-size: 15px;
+  color: #b09870;
+}
+
+.actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 15px;
+  border-top: 1px solid #1c1910;
+  padding-top: 15px;
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid #3c3428;
+  color: #907a58;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 7px 15px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.btn:hover {
+  border-color: #7a6848;
+  color: #c09860;
+}
+
+.btnPrimary {
+  border-color: #b09040;
+  color: #e8c070;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.btnPrimary:hover {
+  background: rgba(232, 192, 112, 0.08);
+}

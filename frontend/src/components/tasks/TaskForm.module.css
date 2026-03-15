@@ -1,0 +1,128 @@
+/* src/components/tasks/TaskForm.module.css */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  gap: 21px;
+}
+
+.label {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7e6a48;
+}
+
+.input,
+.textarea,
+.select {
+  background: #131109;
+  border: 1px solid #3c3428;
+  border-radius: 3px;
+  color: #f0ddb8;
+  font-family: 'DM Mono', monospace;
+  font-size: 16px;
+  padding: 10px 13px;
+  transition: border-color 0.12s;
+  width: 100%;
+}
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: #7e6a48;
+}
+.inputError {
+  border-color: #c84040;
+}
+.textarea {
+  resize: vertical;
+  min-height: 105px;
+}
+.select option {
+  background: #131109;
+}
+
+/* date input calendar icon colour (webkit) */
+.input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.3) sepia(1) saturate(2) hue-rotate(10deg);
+  cursor: pointer;
+}
+
+.fieldError {
+  font-size: 15px;
+  color: #c84040;
+  letter-spacing: 0.04em;
+}
+
+.formError {
+  font-size: 16px;
+  color: #c84040;
+  background: rgba(200, 64, 64, 0.08);
+  border: 1px solid rgba(200, 64, 64, 0.2);
+  padding: 12px 15px;
+  border-radius: 3px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid #3c3428;
+  color: #907a58;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 21px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.cancelBtn:hover {
+  border-color: #7a6848;
+  color: #c09860;
+}
+
+.submitBtn {
+  background: #e8c070;
+  border: none;
+  color: #100e08;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 19px;
+  padding: 10px 27px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.submitBtn:hover:not(:disabled) {
+  background: #f5d47e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(232, 192, 112, 0.35);
+}
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

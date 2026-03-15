@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Environment
+.env
+
+# Database
+data/*.db
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# macOS
+.DS_Store

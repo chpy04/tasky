@@ -1,0 +1,859 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    background: #1e1208;
+    border-radius: 4px;
+    border: 1px solid #5a3e22;
+    overflow: hidden;
+    font-family: 'DM Mono', monospace;
+    min-height: 680px;
+  }
+
+  .topbar {
+    background: #120c05;
+    border-bottom: 2px solid #3a2210;
+    padding: 0 22px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 12px 0;
+  }
+
+  .logo-lockup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .logo-cup {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  .logo-main {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: #e8c070;
+    letter-spacing: 0.02em;
+  }
+
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: #5a3e22;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .topbar-divider {
+    width: 1px;
+    background: #2a1810;
+    margin: 10px 0;
+    flex-shrink: 0;
+  }
+
+  .topbar-stat {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    padding: 0 2px;
+  }
+
+  .topbar-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: #e8c070;
+    line-height: 1;
+  }
+
+  .topbar-stat-label {
+    font-size: 8px;
+    color: #5a3e22;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    flex-shrink: 0;
+  }
+
+  .ai-pill {
+    background: rgba(90,140,55,0.15);
+    border: 1px solid rgba(120,180,70,0.3);
+    color: rgba(155,220,95,0.9);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-pill:hover { background: rgba(90,140,55,0.25); }
+
+  .ai-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(155,220,95,0.9);
+    flex-shrink: 0;
+  }
+
+  .add-task-btn {
+    background: #e8c070;
+    border: none;
+    color: #120c05;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    padding: 7px 16px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .add-task-btn:hover { background: #f0cc7c; }
+
+  .filter-bar {
+    background: #160e07;
+    border-bottom: 1px solid #2e1e0e;
+    padding: 9px 22px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 20px;
+    margin-right: 20px;
+    border-right: 1px solid #2a1810;
+  }
+  .filter-group:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+
+  .filter-group-label {
+    font-size: 8px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #3e2810;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .filter-chips { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+
+  .fchip {
+    background: transparent;
+    border: 1px solid #2a1810;
+    color: #6a5038;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .fchip:hover { color: #c09860; border-color: #4a3520; }
+  .fchip.active { color: #e8c070; border-color: #7a5830; background: rgba(232,192,112,0.07); }
+
+  .fdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .fd-racing  { background: #c4782a; }
+  .fd-classes { background: #6880c8; }
+  .fd-ski     { background: #50a8c0; }
+  .fd-work    { background: #72a848; }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  .sidebar {
+    width: 44px;
+    background: #0e0905;
+    border-right: 1px solid #2a1810;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .nav-icon {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: #4a3020;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .nav-icon:hover { color: #a07840; border-color: #2a1810; }
+  .nav-icon.active { color: #e8c070; border-color: #4a3520; background: rgba(232,192,112,0.07); }
+  .nav-spacer { flex: 1; }
+
+  .columns-area { display: flex; flex: 1; overflow: hidden; }
+
+  .task-col {
+    flex: 1;
+    border-right: 1px solid #2a1810;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    position: relative;
+  }
+  .task-col:last-child { border-right: none; }
+
+  .col-header {
+    background: #120c05;
+    border-bottom: 1px solid #2a1810;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .col-icon {
+    width: 18px; height: 18px;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .col-title-text {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: #a08050;
+    flex: 1;
+  }
+
+  .col-count {
+    background: #1a0e06;
+    border: 1px solid #2a1810;
+    color: #6a5038;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  .col-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    scrollbar-width: thin;
+    scrollbar-color: #2a1810 transparent;
+  }
+  .col-body::-webkit-scrollbar { width: 3px; }
+  .col-body::-webkit-scrollbar-thumb { background: #2a1810; }
+
+  .task-card {
+    background: #201408;
+    border: 1px solid #362010;
+    border-left: 3px solid transparent;
+    border-radius: 2px;
+    transition: background 0.12s, border-color 0.12s;
+    overflow: hidden;
+  }
+  .task-card:hover { background: #281a0a; border-color: #5a3e22; border-left-color: inherit; }
+
+  .task-card.lc-urgent { border-left-color: #c84040; }
+  .task-card.lc-high   { border-left-color: #d08030; }
+  .task-card.lc-medium { border-left-color: #d4a850; }
+  .task-card.lc-low    { border-left-color: #4a6028; }
+
+  .task-card-main {
+    padding: 9px 10px;
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    cursor: pointer;
+  }
+
+  .task-check {
+    width: 14px; height: 14px;
+    border: 1.5px solid #3e2810;
+    background: transparent;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 9px;
+    color: transparent;
+    border-radius: 0;
+  }
+  .task-check:hover { border-color: #a07840; }
+  .task-check.checked { background: #2e1c08; border-color: #7a6048; color: #a07840; }
+
+  .task-info { flex: 1; min-width: 0; }
+
+  .task-title {
+    font-size: 12px;
+    color: #f0ddb8;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .task-title.done { color: #3e2810; text-decoration: line-through; }
+
+  .task-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  .task-due { font-size: 9px; color: #5a3e22; letter-spacing: 0.06em; }
+  .task-due.soon { color: #c48040; }
+
+  .task-exp-badge {
+    font-size: 9px;
+    color: #6a5038;
+    background: #180e06;
+    border: 1px solid #2a1810;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .expand-btn {
+    background: transparent;
+    border: none;
+    color: #3e2810;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: all 0.15s;
+    margin-top: 1px;
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+  }
+  .expand-btn:hover { color: #a07840; }
+  .expand-btn.open { color: #a07840; display: inline-block; transform: rotate(180deg); }
+
+  .task-detail {
+    display: none;
+    border-top: 1px solid #2a1810;
+    padding: 10px 12px 12px 34px;
+    background: #180e06;
+  }
+  .task-detail.open { display: block; }
+
+  .detail-desc-text {
+    font-size: 11px;
+    color: #8a7058;
+    line-height: 1.8;
+    margin-bottom: 10px;
+  }
+
+  .detail-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+  .detail-row-label {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #3e2810;
+    white-space: nowrap;
+    flex-shrink: 0;
+    width: 44px;
+  }
+  .detail-row-val { font-size: 10px; color: #8a7058; }
+  .detail-row-val.link { color: #7aaa50; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+  .detail-actions-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    border-top: 1px solid #201208;
+    padding-top: 10px;
+  }
+  .det-btn {
+    background: transparent;
+    border: 1px solid #2e1c08;
+    color: #6a5038;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .det-btn:hover { border-color: #7a6048; color: #c09860; }
+  .det-btn.primary {
+    border-color: #b09040;
+    color: #e8c070;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    text-transform: none;
+  }
+  .det-btn.primary:hover { background: rgba(232,192,112,0.08); }
+
+  .done-divider {
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #2e1c08;
+    padding: 6px 2px 3px;
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace;
+  }
+  .done-divider::after { content:''; flex:1; height:1px; background:#1a0e06; }
+
+  .col-watermark {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+</style>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo-lockup">
+        <svg class="logo-cup" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 10h18l-2 12H8L6 10z" stroke="#5a3e22" stroke-width="1" fill="#1e1208"/>
+          <path d="M20 10c0 0 3 0 3 3s-3 3-3 3" stroke="#5a3e22" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <path d="M8 7c0 0 1-2 3-2s2 3 4 3 2-3 4-3" stroke="#3a2210" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <ellipse cx="14" cy="13" rx="4" ry="1.5" fill="#2e1a08"/>
+          <path d="M9 13c1 1 3 2 5 2s4-1 5-2" stroke="#3a2210" stroke-width="0.75" fill="none"/>
+        </svg>
+        <div class="logo-text">
+          <div class="logo-main">Tasky</div>
+          <div class="logo-sub">est. 2026</div>
+        </div>
+      </div>
+
+      <div class="topbar-divider"></div>
+
+      <div class="topbar-stat">
+        <div class="topbar-stat-num">11</div>
+        <div class="topbar-stat-label">Open</div>
+      </div>
+      <div class="topbar-stat">
+        <div class="topbar-stat-num">3</div>
+        <div class="topbar-stat-label">In progress</div>
+      </div>
+      <div class="topbar-stat">
+        <div class="topbar-stat-num">4</div>
+        <div class="topbar-stat-label">AI pending</div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="ai-pill"><span class="ai-dot"></span>4 proposals to review</button>
+      <button class="add-task-btn">+ New task</button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-group">
+      <div class="filter-group-label">Experience</div>
+      <div class="filter-chips">
+        <button class="fchip active" onclick="setChip(this)">All</button>
+        <button class="fchip" onclick="setChip(this)"><span class="fdot fd-racing"></span>Elec. Racing</button>
+        <button class="fchip" onclick="setChip(this)"><span class="fdot fd-classes"></span>Classes</button>
+        <button class="fchip" onclick="setChip(this)"><span class="fdot fd-ski"></span>Ski Team</button>
+        <button class="fchip" onclick="setChip(this)"><span class="fdot fd-work"></span>Side Work</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Priority</div>
+      <div class="filter-chips">
+        <button class="fchip active" onclick="setChip(this)">All</button>
+        <button class="fchip" onclick="setChip(this)" style="color:#c84040;border-color:#3a1818">Urgent</button>
+        <button class="fchip" onclick="setChip(this)" style="color:#c08030;border-color:#3a2010">High</button>
+        <button class="fchip" onclick="setChip(this)" style="color:#c0a040;border-color:#3a3010">Medium</button>
+        <button class="fchip" onclick="setChip(this)" style="color:#5a7830;border-color:#202a10">Low</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="sidebar">
+      <div class="nav-icon active" title="Tasks">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="1" width="5" height="5" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="8" y="1" width="5" height="5" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="1" y="8" width="5" height="5" stroke="currentColor" stroke-width="1.2"/>
+          <rect x="8" y="8" width="5" height="5" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="nav-icon" title="Experiences">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="nav-icon" title="Ingestion">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1v12M3 5l4-4 4 4M3 9l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="nav-spacer"></div>
+      <div class="nav-icon" title="Settings">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.93 2.93l1.41 1.41M9.66 9.66l1.41 1.41M2.93 11.07l1.41-1.41M9.66 4.34l1.41-1.41" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="columns-area">
+
+      <!-- In Progress -->
+      <div class="task-col">
+        <div class="col-header">
+          <svg class="col-icon" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="7" stroke="#5a3e22" stroke-width="1"/>
+            <path d="M9 5v4l3 2" stroke="#5a3e22" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <div class="col-title-text">In Progress</div>
+          <div class="col-count">3</div>
+        </div>
+        <div class="col-body">
+
+          <div class="task-card lc-urgent">
+            <div class="task-card-main" onclick="toggleExpand('can')">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Debug motor controller CAN bus</div>
+                <div class="task-meta-row">
+                  <span class="task-due soon">Mar 16</span>
+                  <span class="task-exp-badge">Elec. Racing</span>
+                </div>
+              </div>
+              <button class="expand-btn open" id="eb-can" onclick="event.stopPropagation();toggleExpand('can')">▾</button>
+            </div>
+            <div class="task-detail open" id="td-can">
+              <div class="detail-desc-text">CAN bus intermittently dropping frames under load. Suspected timing issue with interrupt handler. Reproduced at &gt;3000 RPM on dyno.</div>
+              <div class="detail-row"><span class="detail-row-label">Source</span><span class="detail-row-val">GitHub #142</span></div>
+              <div class="detail-row"><span class="detail-row-label">Link</span><span class="detail-row-val link">github.com/team/firmware/issues/142</span></div>
+              <div class="detail-actions-row">
+                <button class="det-btn">Edit</button>
+                <button class="det-btn">Log time</button>
+                <button class="det-btn primary">Mark done</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-high">
+            <div class="task-card-main" onclick="toggleExpand('pr')">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">PR review — braking system</div>
+                <div class="task-meta-row">
+                  <span class="task-due soon">Mar 15</span>
+                  <span class="task-exp-badge">Elec. Racing</span>
+                </div>
+              </div>
+              <button class="expand-btn" id="eb-pr" onclick="event.stopPropagation();toggleExpand('pr')">▾</button>
+            </div>
+            <div class="task-detail" id="td-pr">
+              <div class="detail-desc-text">Review Jake's PR for the regen braking actuator control loop. Check PID tuning and ensure fallback logic matches the safety spec from Feb 28.</div>
+              <div class="detail-row"><span class="detail-row-label">Link</span><span class="detail-row-val link">github.com/team/firmware/pull/138</span></div>
+              <div class="detail-actions-row">
+                <button class="det-btn">Edit</button>
+                <button class="det-btn">Log time</button>
+                <button class="det-btn primary">Mark done</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-medium">
+            <div class="task-card-main" onclick="toggleExpand('canvas')">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Review Canvas announcements</div>
+                <div class="task-meta-row">
+                  <span class="task-due soon">Mar 17</span>
+                  <span class="task-exp-badge">Classes</span>
+                </div>
+              </div>
+              <button class="expand-btn" id="eb-canvas" onclick="event.stopPropagation();toggleExpand('canvas')">▾</button>
+            </div>
+            <div class="task-detail" id="td-canvas">
+              <div class="detail-desc-text">Check Thermodynamics and Physics II for new postings. Professor Chen mentioned an office hours change. Verify if the group project rubric has been updated.</div>
+              <div class="detail-row"><span class="detail-row-label">Source</span><span class="detail-row-val">Canvas ingestion</span></div>
+              <div class="detail-actions-row">
+                <button class="det-btn">Edit</button>
+                <button class="det-btn">Log time</button>
+                <button class="det-btn primary">Mark done</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="done-divider">Completed today</div>
+          <div class="task-card lc-low" style="opacity:0.38">
+            <div class="task-card-main">
+              <div class="task-check checked">✓</div>
+              <div class="task-info">
+                <div class="task-title done">Submit lab report</div>
+                <div class="task-meta-row"><span class="task-exp-badge">Classes</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <svg class="col-watermark" width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <circle cx="30" cy="30" r="28" stroke="white" stroke-width="1.5"/>
+          <circle cx="30" cy="30" r="18" stroke="white" stroke-width="1"/>
+          <circle cx="30" cy="30" r="8" stroke="white" stroke-width="0.75"/>
+          <path d="M30 2 Q32 20 30 30 Q28 20 30 2" fill="white" opacity="0.5"/>
+        </svg>
+      </div>
+
+      <!-- To Do -->
+      <div class="task-col">
+        <div class="col-header">
+          <svg class="col-icon" viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="2" width="14" height="14" rx="1" stroke="#5a3e22" stroke-width="1"/>
+            <path d="M5 9h8M5 6h8M5 12h5" stroke="#5a3e22" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+          <div class="col-title-text">To Do</div>
+          <div class="col-count">6</div>
+        </div>
+        <div class="col-body">
+
+          <div class="task-card lc-high">
+            <div class="task-card-main" onclick="toggleExpand('gate')">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Gate schedule confirmation</div>
+                <div class="task-meta-row">
+                  <span class="task-due">Mar 20</span>
+                  <span class="task-exp-badge">Ski Team</span>
+                </div>
+              </div>
+              <button class="expand-btn" id="eb-gate" onclick="event.stopPropagation();toggleExpand('gate')">▾</button>
+            </div>
+            <div class="task-detail" id="td-gate">
+              <div class="detail-desc-text">Email coach Williams to confirm the gate setup crew for Saturday. Need headcount by EOD Friday. Ask about timing system rental.</div>
+              <div class="detail-actions-row">
+                <button class="det-btn">Edit</button>
+                <button class="det-btn">Log time</button>
+                <button class="det-btn primary">Mark done</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-high">
+            <div class="task-card-main" onclick="toggleExpand('mid')">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Midterm prep — outline</div>
+                <div class="task-meta-row">
+                  <span class="task-due">Mar 24</span>
+                  <span class="task-exp-badge">Classes</span>
+                </div>
+              </div>
+              <button class="expand-btn" id="eb-mid" onclick="event.stopPropagation();toggleExpand('mid')">▾</button>
+            </div>
+            <div class="task-detail" id="td-mid">
+              <div class="detail-desc-text">Draft a study outline for the Thermodynamics midterm covering chapters 4–8. Focus on entropy, Rankine cycle, and problem sets from weeks 6–9.</div>
+              <div class="detail-actions-row">
+                <button class="det-btn">Edit</button>
+                <button class="det-btn">Log time</button>
+                <button class="det-btn primary">Mark done</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-medium">
+            <div class="task-card-main">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Team standup notes</div>
+                <div class="task-meta-row">
+                  <span class="task-due">Mar 21</span>
+                  <span class="task-exp-badge">Elec. Racing</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-medium">
+            <div class="task-card-main">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Book hotel for regionals</div>
+                <div class="task-meta-row">
+                  <span class="task-due">Mar 28</span>
+                  <span class="task-exp-badge">Ski Team</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-low">
+            <div class="task-card-main">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Update project overview.md</div>
+                <div class="task-meta-row"><span class="task-exp-badge">Side Work</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-low">
+            <div class="task-card-main">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Refactor sensor data pipeline</div>
+                <div class="task-meta-row"><span class="task-exp-badge">Elec. Racing</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <svg class="col-watermark" width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <path d="M10 50 Q20 20 30 15 Q40 10 50 20" stroke="white" stroke-width="1.5" fill="none"/>
+          <path d="M10 50 Q18 35 28 30 Q38 25 48 35" stroke="white" stroke-width="1" fill="none"/>
+          <circle cx="30" cy="15" r="3" stroke="white" stroke-width="1"/>
+        </svg>
+      </div>
+
+      <!-- Blocked -->
+      <div class="task-col">
+        <div class="col-header">
+          <svg class="col-icon" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="7" stroke="#5a3e22" stroke-width="1"/>
+            <path d="M9 6v4" stroke="#5a3e22" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="9" cy="13" r="0.75" fill="#5a3e22"/>
+          </svg>
+          <div class="col-title-text">Blocked</div>
+          <div class="col-count">2</div>
+        </div>
+        <div class="col-body">
+
+          <div class="task-card lc-urgent">
+            <div class="task-card-main" onclick="toggleExpand('dyno')">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Motor dyno test</div>
+                <div class="task-meta-row"><span class="task-exp-badge">Elec. Racing</span></div>
+              </div>
+              <button class="expand-btn" id="eb-dyno" onclick="event.stopPropagation();toggleExpand('dyno')">▾</button>
+            </div>
+            <div class="task-detail" id="td-dyno">
+              <div class="detail-desc-text">Blocked on CAN bus fix — can't safely run full dyno test until motor controller is stable. Reschedule once #142 is resolved.</div>
+              <div class="detail-row"><span class="detail-row-label">Blocker</span><span class="detail-row-val">CAN bus bug (#142)</span></div>
+              <div class="detail-actions-row">
+                <button class="det-btn">Edit</button>
+                <button class="det-btn primary">Unblock</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-card lc-medium">
+            <div class="task-card-main" onclick="toggleExpand('dispute')">
+              <div class="task-check" onclick="event.stopPropagation();toggleCheck(this)"></div>
+              <div class="task-info">
+                <div class="task-title">Canvas grade dispute</div>
+                <div class="task-meta-row"><span class="task-exp-badge">Classes</span></div>
+              </div>
+              <button class="expand-btn" id="eb-dispute" onclick="event.stopPropagation();toggleExpand('dispute')">▾</button>
+            </div>
+            <div class="task-detail" id="td-dispute">
+              <div class="detail-desc-text">Waiting on Professor Chen to respond to the regrade request submitted March 10. Follow up if no response by March 18.</div>
+              <div class="detail-actions-row">
+                <button class="det-btn">Edit</button>
+                <button class="det-btn primary">Unblock</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <svg class="col-watermark" width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <path d="M15 45 L30 15 L45 45 Z" stroke="white" stroke-width="1.5" fill="none"/>
+          <path d="M20 38 L30 20 L40 38 Z" stroke="white" stroke-width="0.75" fill="none"/>
+        </svg>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleExpand(id) {
+  const detail = document.getElementById('td-' + id);
+  const btn = document.getElementById('eb-' + id);
+  if (!detail) return;
+  const isOpen = detail.classList.contains('open');
+  detail.classList.toggle('open', !isOpen);
+  if (btn) btn.classList.toggle('open', !isOpen);
+}
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  el.textContent = el.classList.contains('checked') ? '✓' : '';
+  const title = el.closest('.task-card').querySelector('.task-title');
+  title.classList.toggle('done', el.classList.contains('checked'));
+}
+function setChip(el) {
+  el.closest('.filter-chips').querySelectorAll('.fchip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>

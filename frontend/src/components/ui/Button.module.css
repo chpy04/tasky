@@ -1,0 +1,53 @@
+/* src/components/ui/Button.module.css */
+.btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 7px 15px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  line-height: 1.4;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ghost — default secondary action */
+.ghost {
+  background: transparent;
+  border-color: #3c3428;
+  color: #907a58;
+}
+.ghost:hover:not(:disabled) {
+  border-color: #7a6848;
+  color: #c09860;
+}
+
+/* primary — main call to action (Playfair italic) */
+.primary {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  background: transparent;
+  border-color: #b09040;
+  color: #e8c070;
+}
+.primary:hover:not(:disabled) {
+  background: rgba(232, 192, 112, 0.08);
+}
+
+/* danger — destructive action */
+.danger {
+  background: transparent;
+  border-color: #c84040;
+  color: #c84040;
+}
+.danger:hover:not(:disabled) {
+  background: rgba(200, 64, 64, 0.08);
+}

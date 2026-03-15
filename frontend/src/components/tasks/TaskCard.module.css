@@ -1,0 +1,146 @@
+/* src/components/tasks/TaskCard.module.css */
+.card {
+  background: #1c1910;
+  border: 1px solid #3c3428;
+  border-left: 4px solid transparent;
+  border-radius: 3px;
+  transition: background 0.12s, border-color 0.12s;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.card:hover:not(.done) {
+  background: #231f14;
+  border-color: #5a4a38;
+  border-left-color: inherit;
+}
+
+.done {
+  cursor: default;
+}
+
+.blocked {
+  border-color: #c03030;
+}
+.blocked:hover {
+  border-color: #e04040;
+  border-left-color: #c03030 !important;
+}
+
+.main {
+  padding: 13px 15px;
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.done .main {
+  cursor: default;
+}
+.done .info {
+  opacity: 0.38;
+}
+
+.check {
+  width: 21px;
+  height: 21px;
+  border: 2px solid #5e4e38;
+  background: transparent;
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13px;
+  color: transparent;
+  border-radius: 0;
+  user-select: none;
+}
+.check:hover:not(.checked) {
+  border-color: #a07840;
+}
+.checked {
+  background: #2a2418;
+  border-color: #7a6848;
+  color: #a07840;
+  cursor: pointer;
+}
+.checked:hover {
+  background: #1c1910;
+  border-color: #5e4e38;
+  color: #7a6040;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 18px;
+  color: #f0ddb8;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.titleExpanded {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+.titleDone {
+  color: #5e4e38;
+  text-decoration: line-through;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.due {
+  font-size: 13px;
+  color: #7e6a48;
+  letter-spacing: 0.06em;
+}
+.dueSoon {
+  color: #c48040;
+}
+
+.expBadge {
+  font-size: 13px;
+  color: #907a58;
+  background: #141209;
+  border: 1px solid #3c3428;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.chevron {
+  background: transparent;
+  border: none;
+  color: #5e4e38;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 3px;
+  line-height: 1;
+  transition: all 0.15s;
+  margin-top: 2px;
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+}
+.chevron:hover {
+  color: #a07840;
+}
+.chevronOpen {
+  color: #a07840;
+  display: inline-block;
+  transform: rotate(180deg);
+}
