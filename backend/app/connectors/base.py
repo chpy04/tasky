@@ -1,26 +1,48 @@
-"""Connector base protocol.
+"""Connector base class and result type.
 
-All connectors implement a single fetch() method that returns a list of
-minimally structured dicts. The ingestion service calls fetch() on each
-registered connector and persists the results as IngestionBatch records.
+All connectors subclass BaseConnector and implement fetch(since) to return a
+ConnectorResult. The ingestion service calls fetch() on each registered
+connector and persists the result as IngestionBatch records.
 
-Each returned dict should include at minimum:
-  - source_type: str       (matches SourceType enum)
-  - payload: str           (JSON string or raw text for LLM processing)
-  - metadata: dict         (timestamps, source identifiers, links)
+ConnectorResult fields:
+  - success:    bool           whether the fetch completed without error
+  - item_count: int            number of logical items collected (definition
+                               varies per source, e.g. notifications, emails)
+  - api_calls:  int            number of external HTTP calls made (0 for
+                               LLM-based scrapers that don't call an API)
+  - llm_cost:   float          USD cost of any LLM calls (0.0 for deterministic
+                               API sources)
+  - payload:    list[dict]     batch dicts ready to be stored as IngestionBatch
+                               records; each dict must have 'source_type',
+                               'payload', and 'metadata' keys
 
 Connectors must not write to tasks or proposals directly.
 """
-from typing import Protocol, runtime_checkable
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime
 
 
-@runtime_checkable
-class Connector(Protocol):
-    def fetch(self) -> list[dict]:
-        """Fetch new data from the external source.
+@dataclass
+class ConnectorResult:
+    success: bool
+    found_new_content: bool
+    item_count: int
+    api_calls: int
+    llm_cost: float
+    duration_ms: float
+    payload: list[dict] = field(default_factory=list)
 
-        Returns a list of batch dicts ready to be persisted as
-        IngestionBatch records. Each dict must have 'source_type',
-        'payload', and 'metadata' keys.
+
+class BaseConnector(ABC):
+    @abstractmethod
+    def fetch(self, since: datetime) -> ConnectorResult:
+        """Fetch data from the external source since the given UTC datetime.
+
+        Args:
+            since: Only return items updated/created after this timestamp (UTC).
+
+        Returns:
+            A ConnectorResult with the fetched batch dicts in payload.
         """
         ...

@@ -13,7 +13,9 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=str(_REPO_ROOT / ".env"), env_file_encoding="utf-8"
+    )
 
     database_url: str = f"sqlite:///{_REPO_ROOT / 'data' / 'app.db'}"
     vault_path: str = str(_REPO_ROOT / "vault")
