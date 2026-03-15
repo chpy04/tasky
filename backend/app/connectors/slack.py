@@ -5,7 +5,8 @@ visible in Slack's Notifications tab plus messages the user has sent.
 
 Authentication: user OAuth token (xoxp-...) stored in settings.slack_user_token.
 Required scopes: search:read, channels:history, groups:history, im:history,
-                 mpim:history, users:read
+                 mpim:history, users:read, channels:read, groups:read, im:read,
+                 mpim:read
 
 Sync strategy:
   - Three search passes via search.messages:
@@ -43,6 +44,7 @@ class SlackConnector(BaseConnector):
         self._token = settings.slack_user_token
         self._api_calls = 0
         self._user_cache: dict[str, str] = {}  # user_id → display name
+        self._channel_cache: dict[str, str] = {}  # channel_id → name
 
     # ── Internal helpers ──────────────────────────────────────────────────
 
@@ -68,6 +70,47 @@ class SlackConnector(BaseConnector):
         if not data.get("ok"):
             raise RuntimeError(f"Slack API error for {method}: {data.get('error', 'unknown')}")
         return data
+
+    def _prefetch_channels(self) -> None:
+        """Bulk-load all channel/DM names into _channel_cache via conversations.list.
+
+        Called once at the start of fetch(). Uses pagination but only one API
+        call per page — far cheaper than one call per message.
+        """
+        cursor = None
+        for channel_type in ("public_channel,private_channel", "mpim,im"):
+            cursor = None
+            while True:
+                params: dict[str, str] = {
+                    "types": channel_type,
+                    "exclude_archived": "true",
+                    "limit": "200",
+                }
+                if cursor:
+                    params["cursor"] = cursor
+                try:
+                    data = self._request("conversations.list", params)
+                except Exception:
+                    break
+                for ch in data.get("channels", []):
+                    ch_id = ch.get("id", "")
+                    if not ch_id:
+                        continue
+                    # Named channels use "name"; DMs use the other user's name
+                    name = (
+                        ch.get("name")
+                        or ch.get("user")  # im: other user's id (best we can do without extra call)
+                        or ch_id
+                    )
+                    self._channel_cache[ch_id] = name
+                meta = data.get("response_metadata", {})
+                cursor = meta.get("next_cursor")
+                if not cursor:
+                    break
+
+    def _resolve_channel(self, channel_id: str) -> str:
+        """Return a human-readable name for a channel ID (uses pre-fetched cache)."""
+        return self._channel_cache.get(channel_id, channel_id)
 
     def _resolve_user(self, user_id: str) -> str:
         """Return a human-readable name for a Slack user ID (cached)."""
@@ -146,9 +189,11 @@ class SlackConnector(BaseConnector):
     def _prune_message(self, msg: dict, match_reason: str) -> dict:
         """Extract the fields relevant for LLM processing from a search match."""
         channel_info = msg.get("channel", {})
+        channel_id = channel_info.get("id", "")
+        channel_name = channel_info.get("name") or self._resolve_channel(channel_id)
         return {
-            "channel": channel_info.get("name") or channel_info.get("id", ""),
-            "channel_id": channel_info.get("id", ""),
+            "channel": channel_name,
+            "channel_id": channel_id,
             "author": self._resolve_user(msg.get("user", "")),
             "text": msg.get("text", ""),
             "ts": msg.get("ts", ""),
@@ -191,6 +236,9 @@ class SlackConnector(BaseConnector):
         user_id: str = auth["user_id"]
         username: str = auth["user"]
         self._user_cache[user_id] = username  # seed the cache
+
+        # Bulk-load channel names once so every message can resolve id → name.
+        self._prefetch_channels()
 
         # search.messages only supports date-level `after:` filtering.
         oldest_date = since.strftime("%Y-%m-%d")
