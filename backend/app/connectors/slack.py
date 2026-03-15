@@ -20,6 +20,7 @@ Sync strategy:
     theirs), the full thread is fetched via conversations.replies.
   - User IDs are resolved to display names with a batched users.info cache.
 """
+
 import json
 import time
 import urllib.error
@@ -62,14 +63,10 @@ class SlackConnector(BaseConnector):
                 data = json.loads(resp.read())
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(
-                f"Slack API HTTP error {exc.code} for {method}: {body}"
-            ) from exc
+            raise RuntimeError(f"Slack API HTTP error {exc.code} for {method}: {body}") from exc
 
         if not data.get("ok"):
-            raise RuntimeError(
-                f"Slack API error for {method}: {data.get('error', 'unknown')}"
-            )
+            raise RuntimeError(f"Slack API error for {method}: {data.get('error', 'unknown')}")
         return data
 
     def _resolve_user(self, user_id: str) -> str:
@@ -210,9 +207,7 @@ class SlackConnector(BaseConnector):
 
         # ── Post-filter by exact timestamp ───────────────────────────────
         since_ts = since.timestamp()
-        raw_items = [
-            (m, r) for (m, r) in raw_items if float(m.get("ts", 0)) > since_ts
-        ]
+        raw_items = [(m, r) for (m, r) in raw_items if float(m.get("ts", 0)) > since_ts]
 
         # ── Deduplicate (same message can match multiple queries) ─────────
         seen: set[str] = set()
