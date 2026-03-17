@@ -32,6 +32,10 @@ class ProposedTask(BaseModel):
     proposed_due_at: str | None = Field(
         default=None, description="Proposed due date in ISO 8601 format (e.g. 2026-03-20T17:00:00)."
     )
+    proposed_experience_name: str | None = Field(
+        default=None,
+        description="Name of the experience this task belongs to (must match one of the experience names listed in the prompt). Leave null if no experience applies.",
+    )
     proposed_external_ref: str | None = Field(
         default=None,
         description="External reference URL or identifier linking to the source (e.g. GitHub issue URL, email ID).",
@@ -108,6 +112,10 @@ PROPOSAL_TOOL = {
                             "proposed_due_at": {
                                 "type": "string",
                                 "description": "Proposed due date in ISO 8601 format (e.g. 2026-03-20T17:00:00).",
+                            },
+                            "proposed_experience_name": {
+                                "type": "string",
+                                "description": "Name of the experience this task belongs to (must match one of the experience names listed in the prompt). Omit if no experience applies.",
                             },
                             "proposed_external_ref": {
                                 "type": "string",

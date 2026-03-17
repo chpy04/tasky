@@ -1,0 +1,36 @@
+/* ProposalTypeBadge.module.css */
+.badge {
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.create_task {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.update_task {
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.12);
+  border: 1px solid rgba(74, 158, 255, 0.3);
+}
+
+.change_status {
+  color: #e8c070;
+  background: rgba(232, 192, 112, 0.12);
+  border: 1px solid rgba(232, 192, 112, 0.3);
+}
+
+.cancel_task {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.12);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}

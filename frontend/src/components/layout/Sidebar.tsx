@@ -37,6 +37,17 @@ function IngestionIcon() {
   );
 }
 
+function ProposalsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M2 2h10v8H2z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M5 5h4M5 7h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M9 10l1.5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M5 10l-1.5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -85,6 +96,9 @@ export default function Sidebar() {
       </NavIcon>
       <NavIcon to="/ingestion" label="Ingestion">
         <IngestionIcon />
+      </NavIcon>
+      <NavIcon to="/proposals" label="Proposals">
+        <ProposalsIcon />
       </NavIcon>
       <div className={styles.spacer} />
       <NavIcon to="/settings" label="Settings">

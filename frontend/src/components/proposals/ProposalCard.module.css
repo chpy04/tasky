@@ -1,0 +1,63 @@
+/* ProposalCard.module.css */
+.card {
+  background: #201408;
+  border: 1px solid #362010;
+  border-left: 3px solid transparent;
+  border-radius: 3px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card:hover {
+  background: #281a0a;
+}
+
+.selected {
+  border-left-color: #e8c070;
+  background: #281a0a;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: "DM Mono", monospace;
+  font-size: 14px;
+  color: #f0ddb8;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reason {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  color: #6a5038;
+  line-height: 1.5;
+}
+
+.source {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  color: #5a3e22;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

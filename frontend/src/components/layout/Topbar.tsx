@@ -1,6 +1,7 @@
 // src/components/layout/Topbar.tsx
 import { useNavigate } from "react-router-dom";
 import type { Task } from "../../types";
+import { usePendingProposalCount } from "../../api/useProposals";
 import styles from "./Topbar.module.css";
 
 interface TopbarProps {
@@ -34,6 +35,7 @@ function LogoCup() {
 
 export default function Topbar({ tasks, onNewTask }: TopbarProps) {
   const navigate = useNavigate();
+  const pendingProposals = usePendingProposalCount();
 
   const openCount = tasks.filter((t) =>
     ["todo", "in_progress", "blocked"].includes(t.status),
@@ -65,7 +67,8 @@ export default function Topbar({ tasks, onNewTask }: TopbarProps) {
 
       <div className={styles.right}>
         <button className={styles.aiPill} onClick={() => navigate("/proposals")}>
-          <span className={styles.aiDot} />0 proposals to review
+          <span className={styles.aiDot} />
+          {pendingProposals} proposal{pendingProposals !== 1 ? "s" : ""} to review
         </button>
         <button className={styles.addTaskBtn} onClick={onNewTask}>
           + New task

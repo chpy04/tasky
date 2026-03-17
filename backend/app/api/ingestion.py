@@ -240,6 +240,7 @@ def prompt_preview(run_id: int, db: Session = Depends(get_db)):
     import tiktoken
 
     from app.llm.prompt_builder import build_proposal_prompt
+    from app.models.experience import Experience
     from app.models.task import Task, TaskStatus
     from app.services.ingestion_service import IngestionService
     from app.vault.reader import VaultReader
@@ -251,9 +252,10 @@ def prompt_preview(run_id: int, db: Session = Depends(get_db)):
     active_tasks = (
         db.query(Task).filter(Task.status.notin_([TaskStatus.done, TaskStatus.cancelled])).all()
     )
+    active_experiences = db.query(Experience).filter(Experience.active.is_(True)).all()
 
     vault = VaultReader()
-    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks)
+    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks, active_experiences)
 
     enc = tiktoken.encoding_for_model("gpt-4o")
     token_count = len(enc.encode(system_prompt + user_prompt))
@@ -270,7 +272,9 @@ def prompt_preview(run_id: int, db: Session = Depends(get_db)):
 def llm_preview(run_id: int, db: Session = Depends(get_db)):
     from app.llm.client import LLMClient, LLMError
     from app.llm.prompt_builder import build_proposal_prompt
+    from app.models.experience import Experience
     from app.models.task import Task, TaskStatus
+    from app.models.task_proposal import ProposalCreatedBy, ProposalType, TaskProposal
     from app.services.ingestion_service import IngestionService
     from app.vault.reader import VaultReader
 
@@ -281,9 +285,11 @@ def llm_preview(run_id: int, db: Session = Depends(get_db)):
     active_tasks = (
         db.query(Task).filter(Task.status.notin_([TaskStatus.done, TaskStatus.cancelled])).all()
     )
+    active_experiences = db.query(Experience).filter(Experience.active.is_(True)).all()
+    experience_name_to_id = {exp.folder_path: exp.id for exp in active_experiences}
 
     vault = VaultReader()
-    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks)
+    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks, active_experiences)
 
     try:
         t0 = time.monotonic()
@@ -291,6 +297,44 @@ def llm_preview(run_id: int, db: Session = Depends(get_db)):
         duration_ms = round((time.monotonic() - t0) * 1000)
     except LLMError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+    # Persist proposals to the database so the Proposals page can show them.
+    # Use the first batch of the run as the ingestion_batch_id reference (best effort).
+    batch_id = run.batches[0].id if run.batches else None
+    now = datetime.now(timezone.utc)
+    saved = []
+    for p in result.batch.proposals:
+        due_at = None
+        if p.proposed_due_at:
+            from datetime import datetime as dt
+
+            try:
+                due_at = dt.fromisoformat(p.proposed_due_at.replace("Z", "+00:00"))
+            except ValueError:
+                pass
+        experience_id = (
+            experience_name_to_id.get(p.proposed_experience_name)
+            if p.proposed_experience_name
+            else None
+        )
+        proposal = TaskProposal(
+            proposal_type=ProposalType(p.proposal_type),
+            status="pending",
+            task_id=p.task_id,
+            proposed_title=p.proposed_title,
+            proposed_description=p.proposed_description,
+            proposed_status=p.proposed_status,
+            proposed_experience_id=experience_id,
+            proposed_due_at=due_at,
+            proposed_external_ref=p.proposed_external_ref,
+            reason_summary=p.reason_summary,
+            created_at=now,
+            created_by=ProposalCreatedBy.ai,
+            ingestion_batch_id=batch_id,
+        )
+        db.add(proposal)
+        saved.append(proposal)
+    db.commit()
 
     return {
         "run_id": run.id,
@@ -300,4 +344,5 @@ def llm_preview(run_id: int, db: Session = Depends(get_db)):
         "input_tokens": result.input_tokens,
         "output_tokens": result.output_tokens,
         "duration_ms": duration_ms,
+        "saved_count": len(saved),
     }

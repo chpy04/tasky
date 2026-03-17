@@ -1,0 +1,48 @@
+/* SourceTrace.module.css */
+.trace {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.label {
+  color: #5a3e22;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.sourceTag {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.value {
+  color: #6a5038;
+  line-height: 1.5;
+}
+
+.runStatus {
+  color: #6a5038;
+}
+
+.ok {
+  color: #4caf50;
+}

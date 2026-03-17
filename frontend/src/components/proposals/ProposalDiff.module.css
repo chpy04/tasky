@@ -1,0 +1,195 @@
+/* ProposalDiff.module.css */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+}
+
+.thField,
+.thCurrent,
+.thProposed {
+  padding: 6px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #5a3e22;
+  border-bottom: 1px solid #2a1810;
+  text-align: left;
+  font-weight: 500;
+}
+
+.thField {
+  text-align: right;
+  width: 100px;
+}
+
+.tdField {
+  text-align: right;
+  padding: 8px 12px;
+  color: #6a5038;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  vertical-align: top;
+  white-space: nowrap;
+  border-bottom: 1px solid #1e1208;
+}
+
+.tdCurrent {
+  padding: 8px 12px;
+  color: #6a5038;
+  vertical-align: top;
+  border-bottom: 1px solid #1e1208;
+  max-width: 200px;
+  word-break: break-word;
+}
+
+.tdProposed {
+  padding: 8px 12px;
+  color: #8a7058;
+  vertical-align: top;
+  border-bottom: 1px solid #1e1208;
+  max-width: 220px;
+  word-break: break-word;
+  position: relative;
+}
+
+.tdProposedChanged {
+  color: #f0ddb8;
+}
+
+.rowChanged .tdField {
+  color: #8a7058;
+}
+
+.rowUnchanged {
+  opacity: 0.55;
+}
+
+.statusPill {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  display: inline-block;
+}
+
+/* Create card */
+.createCard {
+  background: rgba(76, 175, 80, 0.06);
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.createHeader {
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #4caf50;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.15);
+  background: rgba(76, 175, 80, 0.04);
+}
+
+.createFields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.createRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.08);
+}
+
+.createRow:last-child {
+  border-bottom: none;
+}
+
+.createLabel {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4caf50;
+  opacity: 0.7;
+  width: 80px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.createValue {
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  color: #f0ddb8;
+  word-break: break-word;
+  flex: 1;
+}
+
+/* Cancel warning */
+.cancelWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 3px;
+  padding: 16px 18px;
+}
+
+.cancelIcon {
+  font-family: "DM Mono", monospace;
+  font-size: 16px;
+  color: #ff4444;
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #ff4444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.cancelTitle {
+  font-family: "DM Mono", monospace;
+  font-size: 14px;
+  color: #ff4444;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.cancelTask {
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  color: #8a7058;
+}
+
+.empty {
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  color: #5a3e22;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.changedArrow {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #e8c070;
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}

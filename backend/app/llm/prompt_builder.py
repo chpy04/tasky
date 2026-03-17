@@ -16,6 +16,7 @@ but without a preface, so the pipeline degrades gracefully.
 import json
 import logging
 
+from app.models.experience import Experience
 from app.models.ingestion_batch import IngestionBatch, SourceType
 from app.models.ingestion_run import IngestionRun
 from app.models.task import Task
@@ -43,6 +44,7 @@ def build_proposal_prompt(
     run: IngestionRun,
     vault: VaultReader,
     active_tasks: list[Task] | None = None,
+    experiences: list[Experience] | None = None,
 ) -> tuple[str, str]:
     """Compose the system and user prompts for a proposal generation call.
 
@@ -53,6 +55,9 @@ def build_proposal_prompt(
         active_tasks: Non-complete/cancelled tasks to include so the LLM knows
                       what already exists before proposing changes. Defaults to
                       an empty list when not provided.
+        experiences: Active experiences to include so the LLM can attribute tasks
+                     to the correct experience. Defaults to an empty list when not
+                     provided.
 
     Returns:
         A (system_prompt, user_prompt) tuple ready to pass to LLMClient.generate_proposals.
@@ -61,11 +66,13 @@ def build_proposal_prompt(
         FileNotFoundError: If vault/Prompts/system.md is missing.
     """
     system_prompt = vault.read_prompt("system")
-    user_prompt = _build_user_prompt(run, vault, active_tasks or [])
+    user_prompt = _build_user_prompt(run, vault, active_tasks or [], experiences or [])
     return system_prompt, user_prompt
 
 
-def _build_user_prompt(run: IngestionRun, vault: VaultReader, active_tasks: list[Task]) -> str:
+def _build_user_prompt(
+    run: IngestionRun, vault: VaultReader, active_tasks: list[Task], experiences: list[Experience]
+) -> str:
     parts: list[str] = []
 
     # Header — give the model context about this specific run
@@ -77,6 +84,10 @@ def _build_user_prompt(run: IngestionRun, vault: VaultReader, active_tasks: list
         "Review the data below from each connected source and propose task changes "
         "as described in your instructions."
     )
+
+    # Experiences — appear before active tasks so the model understands the
+    # available contexts before seeing tasks attributed to them.
+    parts.append(_build_experiences_section(experiences))
 
     # Active tasks — must appear before ingestion data so the model can
     # reference existing task IDs when proposing updates rather than
@@ -115,6 +126,33 @@ def _build_user_prompt(run: IngestionRun, vault: VaultReader, active_tasks: list
             parts.append(_format_payload(batch.raw_payload))
 
     return "\n".join(parts)
+
+
+def _build_experiences_section(experiences: list[Experience]) -> str:
+    """Render the experiences section so the LLM can attribute tasks to them.
+
+    The LLM uses experience names (folder_path values) in the
+    `proposed_experience_name` field; the ingestion endpoint resolves
+    these back to integer IDs before persisting proposals.
+    """
+    lines: list[str] = [
+        "\n\n---\n\n## Experiences",
+        "",
+        "Experiences are long-running contexts (projects, jobs, classes, clubs) that tasks "
+        "can be attributed to. When proposing a task, set `proposed_experience_name` to the "
+        "**exact name** from the list below if the task clearly belongs to that experience. "
+        "Leave it unset if the task is not clearly tied to one experience.",
+        "",
+    ]
+
+    if not experiences:
+        lines.append("*(No active experiences configured.)*")
+        return "\n".join(lines)
+
+    for exp in experiences:
+        lines.append(f"- `{exp.folder_path}`")
+
+    return "\n".join(lines)
 
 
 def _build_active_tasks_section(tasks: list[Task]) -> str:
