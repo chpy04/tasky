@@ -9,7 +9,12 @@ import {
 import { useExperiences } from "../../api/useExperiences";
 import type { Task, TaskCreate, TaskStatus } from "../../types";
 import { getExperienceColor } from "../../theme";
-import { formatExperienceName, isDueSoon, isWithinLastDays } from "../../utils/formatters";
+import {
+  formatExperienceName,
+  isDueSoon,
+  isOverdue,
+  isWithinLastDays,
+} from "../../utils/formatters";
 import FilterChip from "../ui/FilterChip";
 import Modal from "../ui/Modal";
 import TaskColumn from "./TaskColumn";
@@ -94,20 +99,24 @@ export default function KanbanBoard({
 
   function getColumnTasks(status: TaskStatus) {
     if (status === "todo") {
-      // Blocked tasks appear in To Do with a red outline
-      // todo tasks due within 3 days are promoted to In Progress display
+      // Blocked tasks appear in To Do unless overdue; todo tasks due soon or overdue are promoted
       const active = sortByDueAsc(
         filtered.filter(
-          (t) => (t.status === "todo" && !isDueSoon(t.due_at)) || t.status === "blocked",
+          (t) =>
+            (t.status === "todo" && !isDueSoon(t.due_at) && !isOverdue(t.due_at)) ||
+            (t.status === "blocked" && !isOverdue(t.due_at)),
         ),
       );
       return { active, done: [] };
     }
     if (status === "in_progress") {
-      // In Progress shows true in_progress tasks + todo tasks due within 3 days
+      // In Progress: true in_progress tasks + todo/blocked tasks due soon + any overdue task
       const active = sortByDueAsc(
         filtered.filter(
-          (t) => t.status === "in_progress" || (t.status === "todo" && isDueSoon(t.due_at)),
+          (t) =>
+            t.status === "in_progress" ||
+            (t.status === "todo" && isDueSoon(t.due_at)) ||
+            (isOverdue(t.due_at) && t.status !== "done"),
         ),
       );
       return { active, done: [] };

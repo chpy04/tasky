@@ -1,19 +1,22 @@
 /* src/components/tasks/TaskCard.module.css */
 .card {
-  background: #1c1910;
-  border: 1px solid #3c3428;
+  background: #3a301e;
+  border: 1px solid #644e36;
   border-left: 4px solid transparent;
-  border-radius: 3px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
   transition:
     background 0.12s,
-    border-color 0.12s;
+    border-color 0.12s,
+    box-shadow 0.12s;
   overflow: hidden;
   flex-shrink: 0;
 }
 .card:hover:not(.done) {
-  background: #231f14;
-  border-color: #5a4a38;
+  background: #473c28;
+  border-color: #826040;
   border-left-color: inherit;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
 }
 
 .done {
@@ -28,6 +31,20 @@
   border-left-color: #c03030 !important;
 }
 
+.overdue {
+  border-color: #c03030;
+  box-shadow:
+    0 0 0 1px #c03030,
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.overdue:hover:not(.done) {
+  border-color: #e04040;
+  border-left-color: #c03030 !important;
+  box-shadow:
+    0 0 0 1px #e04040,
+    0 4px 10px rgba(0, 0, 0, 0.55);
+}
+
 .main {
   padding: 13px 15px;
   display: flex;
@@ -39,13 +56,13 @@
   cursor: default;
 }
 .done .info {
-  opacity: 0.38;
+  opacity: 0.4;
 }
 
 .check {
   width: 21px;
   height: 21px;
-  border: 2px solid #5e4e38;
+  border: 2px solid #9a7a50;
   background: transparent;
   flex-shrink: 0;
   margin-top: 2px;
@@ -60,18 +77,18 @@
   user-select: none;
 }
 .check:hover:not(.checked) {
-  border-color: #a07840;
+  border-color: #d4a050;
 }
 .checked {
-  background: #2a2418;
-  border-color: #7a6848;
-  color: #a07840;
+  background: #302818;
+  border-color: #a08848;
+  color: #c49848;
   cursor: pointer;
 }
 .checked:hover {
-  background: #1c1910;
-  border-color: #5e4e38;
-  color: #7a6040;
+  background: #3a301e;
+  border-color: #8a7248;
+  color: #a08848;
 }
 
 .info {
@@ -81,7 +98,7 @@
 
 .title {
   font-size: 18px;
-  color: #f0ddb8;
+  color: #f8ecce;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
@@ -93,7 +110,7 @@
   text-overflow: unset;
 }
 .titleDone {
-  color: #5e4e38;
+  color: #8a7050;
   text-decoration: line-through;
 }
 
@@ -107,18 +124,22 @@
 
 .due {
   font-size: 13px;
-  color: #7e6a48;
+  color: #b49860;
   letter-spacing: 0.06em;
 }
 .dueSoon {
-  color: #c48040;
+  color: #e09040;
+}
+.dueOverdue {
+  color: #e04040;
+  font-weight: 600;
 }
 
 .expBadge {
   font-size: 13px;
-  color: #907a58;
-  background: #141209;
-  border: 1px solid #3c3428;
+  color: #bc9c60;
+  background: #2e2618;
+  border: 1px solid #644e36;
   padding: 2px 7px;
   border-radius: 3px;
   letter-spacing: 0.05em;
@@ -128,7 +149,7 @@
 .chevron {
   background: transparent;
   border: none;
-  color: #5e4e38;
+  color: #9a7a50;
   font-size: 16px;
   cursor: pointer;
   padding: 0 3px;
@@ -139,10 +160,10 @@
   font-family: "DM Mono", monospace;
 }
 .chevron:hover {
-  color: #a07840;
+  color: #d4a050;
 }
 .chevronOpen {
-  color: #a07840;
+  color: #d4a050;
   display: inline-block;
   transform: rotate(180deg);
 }

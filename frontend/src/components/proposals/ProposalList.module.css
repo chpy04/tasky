@@ -17,8 +17,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px 8px;
-  background: #120c05;
-  border-bottom: 1px solid #2a1810;
+  background: #13100a;
+  border-bottom: 1px solid #2e2820;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -37,16 +37,16 @@
   font-family: "Playfair Display", serif;
   font-style: italic;
   font-size: 14px;
-  color: #8a7058;
+  color: #a08a60;
   white-space: nowrap;
 }
 
 .groupCount {
   font-family: "DM Mono", monospace;
   font-size: 11px;
-  color: #5a3e22;
-  background: #1e1208;
-  border: 1px solid #2a1810;
+  color: #806848;
+  background: #1e1912;
+  border: 1px solid #2e2820;
   border-radius: 3px;
   padding: 1px 6px;
   flex-shrink: 0;
@@ -82,9 +82,9 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #c84040;
+  color: #c89040;
   background: transparent;
-  border: 1px solid rgba(200, 64, 64, 0.35);
+  border: 1px solid rgba(180, 130, 40, 0.4);
   border-radius: 3px;
   padding: 2px 8px;
   cursor: pointer;
@@ -94,8 +94,8 @@
 }
 
 .rejectRunBtn:hover {
-  background: rgba(200, 64, 64, 0.08);
-  border-color: #c84040;
+  background: rgba(180, 130, 40, 0.12);
+  border-color: #c89040;
 }
 
 .cards {
@@ -103,7 +103,7 @@
   flex-direction: column;
   gap: 1px;
   padding: 4px 8px 8px;
-  background: #1e1208;
+  background: #1e1912;
 }
 
 /* Empty state */
@@ -120,5 +120,5 @@
   font-style: italic;
   font-size: 18px;
   color: #e8c070;
-  opacity: 0.6;
+  opacity: 0.65;
 }

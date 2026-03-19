@@ -1,4 +1,18 @@
 /* src/index.css */
+
+:root {
+  /* Warm brown palette — source chips, text, editors */
+  --color-border: #2e2820;
+  --color-accent: #c8a870;
+  --color-accent-focus: #806848;
+  --color-text-muted: #4e3e2c;
+  --color-text-body: #d4c098;
+
+  /* Cool indigo palette — read-only blocks */
+  --color-ro-border: #2a2c3a;
+  --color-ro-bg: #161820;
+  --color-ro-label: #9a8ec8;
+}
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap");
 
 *,
@@ -10,9 +24,9 @@
 }
 
 body {
-  background: #15120c;
+  background: #1e1912;
   font-family: "DM Mono", monospace;
-  color: #f0ddb8;
+  color: #f5e8cc;
   height: 100vh;
   overflow: hidden;
 }

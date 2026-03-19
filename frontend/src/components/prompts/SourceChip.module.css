@@ -1,0 +1,116 @@
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 8px;
+  background: #1e1a12;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color 0.1s ease,
+    background 0.1s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chip:hover {
+  background: #252018;
+  border-color: #3e3020;
+}
+
+.selected {
+  border-color: var(--color-accent);
+  background: #241e0e;
+}
+
+.compact {
+  width: auto;
+  padding: 6px 10px 6px 6px;
+}
+
+.dragging {
+  opacity: 0.88;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+}
+
+/* Original chip while being dragged — stays in flow as ghost placeholder */
+.ghost {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.handle {
+  color: var(--color-text-muted);
+  font-size: 15px;
+  cursor: grab;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.handle:active {
+  cursor: grabbing;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+}
+
+.compact .badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.label {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-accent);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.compact .label {
+  font-size: 11px;
+}
+
+.preview {
+  font-family: "DM Mono", monospace;
+  font-size: 10.5px;
+  color: #5e4e38;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected .preview {
+  color: #7a6040;
+}
+
+.dirtyDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c8a030;
+  flex-shrink: 0;
+}

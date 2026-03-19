@@ -2,35 +2,30 @@
 
 Builds the (system_prompt, user_prompt) pair that is passed to LLMClient.generate_proposals.
 
-The system prompt comes from vault/Prompts/system.md.
+The system prompt and source-specific prefaces are loaded from the active PromptConfig
+in the database (populated by migration d4e5f6g7h8i9 from vault/Prompts/).
 
-The user prompt is assembled from:
-- Ingestion run metadata (time range, run ID)
-- For each batch: a source-specific preface from vault/Prompts/sources/{source_type}.md,
-  followed by the raw payload from that batch.
+Canvas markers in the system prompt are expanded at build time:
+  [[source:X]]        → source-specific interpretation instructions
+  [[experiences]]     → list of active experiences for task attribution
+  [[active_tasks]]    → currently open tasks so the model avoids duplicates
+  [[source_data:X]]   → raw connector batches for source X
 
-Source prompt files are optional — if one is missing the section is still included
-but without a preface, so the pipeline degrades gracefully.
+Any marker absent from the system prompt is excluded from the final prompt entirely.
 """
 
 import json
 import logging
+import re
+
+from sqlalchemy.orm import Session
 
 from app.models.experience import Experience
 from app.models.ingestion_batch import IngestionBatch, SourceType
 from app.models.ingestion_run import IngestionRun
 from app.models.task import Task
-from app.vault.reader import VaultReader
 
 logger = logging.getLogger(__name__)
-
-# Maps SourceType enum values to vault prompt names under sources/
-_SOURCE_PROMPT_NAMES: dict[SourceType, str] = {
-    SourceType.github: "sources/github",
-    SourceType.slack: "sources/slack",
-    SourceType.email: "sources/email",
-    SourceType.canvas: "sources/canvas",
-}
 
 _SOURCE_DISPLAY_NAMES: dict[SourceType, str] = {
     SourceType.github: "GitHub",
@@ -39,102 +34,137 @@ _SOURCE_DISPLAY_NAMES: dict[SourceType, str] = {
     SourceType.canvas: "Canvas",
 }
 
+# Unified marker regex: [[source:X]], [[source_data:X]], [[experiences]], [[active_tasks]]
+_MARKER_RE = re.compile(r"\[\[(\w+)(?::(\w+))?\]\]")
+
+
+def _expand_markers(
+    system_prompt: str,
+    source_prompts: dict[SourceType, str],
+    experiences: list[Experience] | None = None,
+    active_tasks: list[Task] | None = None,
+    batches_by_source: dict[SourceType, list[IngestionBatch]] | None = None,
+) -> str:
+    """Replace all [[...]] markers with runtime content.
+
+    Markers absent from the system prompt are not included anywhere — there is
+    no fallback to the user prompt.  Unknown marker kinds are stripped silently.
+    """
+
+    def replacer(m: re.Match) -> str:
+        marker_kind = m.group(1)
+        marker_arg = m.group(2)
+
+        if marker_kind == "source":
+            try:
+                st = SourceType(marker_arg)
+            except (ValueError, TypeError):
+                return ""
+            content = source_prompts.get(st)
+            if content is None:
+                return ""
+            display = _SOURCE_DISPLAY_NAMES.get(st, st.value)
+            return f"---\n\n## {display} Instructions\n\n{content}"
+
+        if marker_kind == "experiences":
+            return _build_experiences_section(experiences or []).lstrip("\n")
+
+        if marker_kind == "active_tasks":
+            return _build_active_tasks_section(active_tasks or []).lstrip("\n")
+
+        if marker_kind == "source_data":
+            try:
+                st = SourceType(marker_arg)
+            except (ValueError, TypeError):
+                return ""
+            batches = (batches_by_source or {}).get(st, [])
+            if not batches:
+                return ""
+            display = _SOURCE_DISPLAY_NAMES.get(st, st.value)
+            parts = [f"---\n\n## {display} Data"]
+            for batch in batches:
+                parts.append(f"\n### Batch {batch.id}")
+                parts.append(_format_payload(batch.raw_payload))
+            return "\n".join(parts)
+
+        return ""  # unknown marker kind — strip
+
+    return _MARKER_RE.sub(replacer, system_prompt).strip()
+
+
+def _get_active_prompts(db: Session) -> tuple[str, dict[SourceType, str]]:
+    """Return (system_prompt_content, {source_type: content}) from the active PromptConfig.
+
+    Raises RuntimeError if no active config exists.
+    """
+    from app.models.prompt import PromptConfig
+
+    config = db.query(PromptConfig).filter(PromptConfig.is_active.is_(True)).first()
+    if config is None:
+        raise RuntimeError(
+            "No active PromptConfig found. Run 'alembic upgrade head' to seed the database."
+        )
+
+    system_content = config.system_prompt.content
+    source_prompts: dict[SourceType, str] = {
+        entry.source_type: entry.prompt.content for entry in config.entries
+    }
+    return system_content, source_prompts
+
 
 def build_proposal_prompt(
     run: IngestionRun,
-    vault: VaultReader,
+    db: Session,
     active_tasks: list[Task] | None = None,
     experiences: list[Experience] | None = None,
 ) -> tuple[str, str]:
     """Compose the system and user prompts for a proposal generation call.
 
+    The system prompt is built by expanding canvas markers in the active
+    PromptConfig's system prompt content.  Only markers that are present in
+    the stored system prompt are included; unplaced blocks are excluded.
+
     Args:
-        run: The IngestionRun whose batches should be included. Should be loaded
-             with its `batches` relationship populated.
-        vault: VaultReader instance used to load prompt files.
-        active_tasks: Non-complete/cancelled tasks to include so the LLM knows
-                      what already exists before proposing changes. Defaults to
-                      an empty list when not provided.
-        experiences: Active experiences to include so the LLM can attribute tasks
-                     to the correct experience. Defaults to an empty list when not
-                     provided.
+        run: The IngestionRun whose batches should be included.
+        db: SQLAlchemy session used to load the active PromptConfig.
+        active_tasks: Non-complete/cancelled tasks to expand [[active_tasks]].
+        experiences: Active experiences to expand [[experiences]].
 
     Returns:
         A (system_prompt, user_prompt) tuple ready to pass to LLMClient.generate_proposals.
 
     Raises:
-        FileNotFoundError: If vault/Prompts/system.md is missing.
+        RuntimeError: If no active PromptConfig exists in the database.
     """
-    system_prompt = vault.read_prompt("system")
-    user_prompt = _build_user_prompt(run, vault, active_tasks or [], experiences or [])
-    return system_prompt, user_prompt
+    system_raw, source_prompts = _get_active_prompts(db)
+
+    batches_by_source: dict[SourceType, list[IngestionBatch]] = {}
+    for batch in run.batches or []:
+        batches_by_source.setdefault(batch.source_type, []).append(batch)
+
+    system_expanded = _expand_markers(
+        system_raw,
+        source_prompts,
+        experiences=experiences or [],
+        active_tasks=active_tasks or [],
+        batches_by_source=batches_by_source,
+    )
+    user_prompt = _build_user_prompt(run)
+    return system_expanded, user_prompt
 
 
-def _build_user_prompt(
-    run: IngestionRun, vault: VaultReader, active_tasks: list[Task], experiences: list[Experience]
-) -> str:
-    parts: list[str] = []
-
-    # Header — give the model context about this specific run
+def _build_user_prompt(run: IngestionRun) -> str:
     range_start = run.range_start.isoformat() if run.range_start else "unknown"
     range_end = run.range_end.isoformat() if run.range_end else "unknown"
-    parts.append(
+    return (
         f"# Ingestion Run {run.id}\n\n"
         f"Time range: {range_start} → {range_end}\n\n"
-        "Review the data below from each connected source and propose task changes "
-        "as described in your instructions."
+        "Review the context and data in your system instructions and propose task changes."
     )
-
-    # Experiences — appear before active tasks so the model understands the
-    # available contexts before seeing tasks attributed to them.
-    parts.append(_build_experiences_section(experiences))
-
-    # Active tasks — must appear before ingestion data so the model can
-    # reference existing task IDs when proposing updates rather than
-    # duplicating work that is already tracked.
-    parts.append(_build_active_tasks_section(active_tasks))
-
-    batches: list[IngestionBatch] = run.batches or []
-
-    if not batches:
-        parts.append("\n\n*(No batches were collected for this run.)*")
-        return "\n".join(parts)
-
-    # Group batches by source type so each source appears as one section
-    grouped: dict[SourceType, list[IngestionBatch]] = {}
-    for batch in batches:
-        grouped.setdefault(batch.source_type, []).append(batch)
-
-    for source_type, source_batches in grouped.items():
-        display_name = _SOURCE_DISPLAY_NAMES.get(source_type, source_type.value)
-        parts.append(f"\n\n---\n\n## {display_name}")
-
-        # Prepend the source-specific prompt if it exists
-        prompt_name = _SOURCE_PROMPT_NAMES.get(source_type)
-        if prompt_name:
-            try:
-                source_prompt = vault.read_prompt(prompt_name)
-                parts.append(f"\n{source_prompt}")
-            except FileNotFoundError:
-                logger.warning(
-                    "Source prompt not found for %s (%s)", source_type.value, prompt_name
-                )
-
-        # Include the raw payload from each batch for this source
-        for batch in source_batches:
-            parts.append(f"\n### Batch {batch.id}")
-            parts.append(_format_payload(batch.raw_payload))
-
-    return "\n".join(parts)
 
 
 def _build_experiences_section(experiences: list[Experience]) -> str:
-    """Render the experiences section so the LLM can attribute tasks to them.
-
-    The LLM uses experience names (folder_path values) in the
-    `proposed_experience_name` field; the ingestion endpoint resolves
-    these back to integer IDs before persisting proposals.
-    """
+    """Render the experiences section so the LLM can attribute tasks to them."""
     lines: list[str] = [
         "\n\n---\n\n## Experiences",
         "",
@@ -156,17 +186,12 @@ def _build_experiences_section(experiences: list[Experience]) -> str:
 
 
 def _build_active_tasks_section(tasks: list[Task]) -> str:
-    """Render the active-tasks section that precedes ingestion data.
-
-    The preface instructs the LLM to treat these records as the ground truth
-    for what already exists, so it can propose *updates* to existing tasks
-    instead of creating duplicates.
-    """
+    """Render the active-tasks section that precedes ingestion data."""
     lines: list[str] = [
         "\n\n---\n\n## Current Active Tasks",
         "",
         "The following tasks are currently open (status is not `done` or `cancelled`). "
-        "When reviewing the ingestion data below, **prefer proposing updates to these "
+        "When reviewing the ingestion data, **prefer proposing updates to these "
         "existing tasks** (using their `task_id`) over creating new ones for the same "
         "work item. Only propose a `create_task` when no existing task covers the new "
         "work. Use `change_status` to mark a task done or cancelled if the ingestion "

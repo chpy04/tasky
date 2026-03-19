@@ -15,7 +15,7 @@
 }
 
 .label {
-  color: #5a3e22;
+  color: #806848;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 11px;
@@ -35,12 +35,12 @@
 }
 
 .value {
-  color: #6a5038;
+  color: #a08a60;
   line-height: 1.5;
 }
 
 .runStatus {
-  color: #6a5038;
+  color: #a08a60;
 }
 
 .ok {

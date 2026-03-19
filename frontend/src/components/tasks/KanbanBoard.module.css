@@ -7,8 +7,8 @@
 }
 
 .filterBar {
-  background: #131109;
-  border-bottom: 1px solid #3c3428;
+  background: #1a1710;
+  border-bottom: 1px solid #4e4030;
   padding: 13px 33px;
   display: flex;
   align-items: center;
@@ -24,7 +24,7 @@
   gap: 12px;
   padding-right: 30px;
   margin-right: 30px;
-  border-right: 1px solid #3c3428;
+  border-right: 1px solid #4e4030;
   min-width: 0;
   flex: 1;
 }
@@ -42,7 +42,7 @@
   font-size: 12px;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: #7e6a48;
+  color: #a89060;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -60,9 +60,9 @@
 }
 
 .errorBanner {
-  background: rgba(200, 64, 64, 0.12);
-  border-bottom: 1px solid rgba(200, 64, 64, 0.25);
-  color: #c84040;
+  background: rgba(200, 64, 64, 0.14);
+  border-bottom: 1px solid rgba(200, 64, 64, 0.3);
+  color: #d84040;
   font-family: "DM Mono", monospace;
   font-size: 16px;
   padding: 12px 33px;
@@ -75,7 +75,7 @@
 .errorClose {
   background: transparent;
   border: none;
-  color: #c84040;
+  color: #d84040;
   cursor: pointer;
   font-size: 16px;
   padding: 3px 6px;

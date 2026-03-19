@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   usePreview,
   useIngestionRuns,
@@ -10,10 +12,16 @@ import {
   useCreateIngestionRun,
   useRerunIngestionRun,
   useDeleteIngestionRun,
-  usePromptPreview,
-  useLLMPreview,
+  useRunPrompt,
+  useRunProposals,
+  useProposeTasksForRun,
 } from "../api/useIngestion";
-import type { SourceId, IngestionRunSummary } from "../api/useIngestion";
+import type {
+  SourceId,
+  IngestionRunSummary,
+  RunProposal,
+  ProposeResult,
+} from "../api/useIngestion";
 import { useGmailAuth } from "../api/useGmailAuth";
 import styles from "./Ingestion.module.css";
 
@@ -115,7 +123,7 @@ const SOURCES: SourceConfig[] = [
 
 interface SourceCardProps {
   source: SourceConfig;
-  authConnected?: boolean; // undefined = no auth required
+  authConnected?: boolean;
   onConnect?: () => void;
   connectError?: string | null;
 }
@@ -225,6 +233,28 @@ function SourceCard({ source, authConnected, onConnect, connectError }: SourceCa
   );
 }
 
+// ── Sources section ────────────────────────────────────────────────────────────
+
+function SourcesSection() {
+  const gmailAuth = useGmailAuth();
+  return (
+    <div className={styles.section}>
+      <h2 className={styles.sectionTitle}>Sources</h2>
+      <div className={styles.previewCards}>
+        {SOURCES.map((source) => (
+          <SourceCard
+            key={source.id}
+            source={source}
+            authConnected={source.id === "gmail" ? gmailAuth.connected : undefined}
+            onConnect={source.id === "gmail" ? gmailAuth.connect : undefined}
+            connectError={source.id === "gmail" ? gmailAuth.connectError : undefined}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── New run form ─────────────────────────────────────────────────────────────
 
 function NewRunForm() {
@@ -244,7 +274,7 @@ function NewRunForm() {
         <label className={styles.dateLabel}>
           start
           <input
-            type="date"
+            type="datetime-local"
             className={styles.dateInput}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -253,7 +283,7 @@ function NewRunForm() {
         <label className={styles.dateLabel}>
           end <span className={styles.sourceDesc}>(optional — defaults to now)</span>
           <input
-            type="date"
+            type="datetime-local"
             className={styles.dateInput}
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -270,13 +300,6 @@ function NewRunForm() {
       {createRun.error && (
         <div className={styles.statusStrip}>
           <span className={styles.statusError}>✗ {(createRun.error as Error).message}</span>
-        </div>
-      )}
-      {createRun.isSuccess && (
-        <div className={styles.statusStrip}>
-          <span className={styles.statusOk}>
-            ✓ run #{createRun.data.id} completed — {createRun.data.batches.length} batches
-          </span>
         </div>
       )}
     </div>
@@ -345,87 +368,309 @@ function BatchCard({ batch }: { batch: import("../api/useIngestion").IngestionBa
   );
 }
 
-// ── Run row ──────────────────────────────────────────────────────────────────
+// ── Run prompt tab ────────────────────────────────────────────────────────────
 
-function RunRow({ run }: { run: IngestionRunSummary }) {
-  const [expanded, setExpanded] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const detail = useIngestionRun(expanded ? run.id : null);
-  const rerun = useRerunIngestionRun();
-  const deleteRun = useDeleteIngestionRun();
+function RunPromptTab({ runId }: { runId: number }) {
+  const prompt = useRunPrompt(runId);
+  const [copied, setCopied] = useState(false);
+
+  const combined = prompt.data
+    ? prompt.data.system_prompt + "\n\n---\n\n" + prompt.data.user_prompt
+    : null;
+
+  const handleCopy = () => {
+    if (!combined) return;
+    navigator.clipboard.writeText(combined).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+
+  if (prompt.isLoading) return <p className={styles.empty}>loading prompt…</p>;
+  if (prompt.error) {
+    return (
+      <div className={styles.statusStrip}>
+        <span className={styles.statusError}>✗ {(prompt.error as Error).message}</span>
+      </div>
+    );
+  }
+  if (!combined) return null;
+
+  return (
+    <div className={styles.promptSection}>
+      <div className={styles.promptHeader}>
+        <span className={styles.statusMeta}>
+          {combined.length.toLocaleString()} chars · {prompt.data!.token_count.toLocaleString()}{" "}
+          tokens
+        </span>
+        <button className={styles.copyBtn} onClick={handleCopy}>
+          {copied ? "copied" : "copy"}
+        </button>
+      </div>
+      <div className={styles.promptMarkdown}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{combined}</ReactMarkdown>
+      </div>
+    </div>
+  );
+}
+
+// ── Proposal card ─────────────────────────────────────────────────────────────
+
+function ProposalCard({ proposal }: { proposal: RunProposal }) {
+  const [open, setOpen] = useState(false);
 
   const statusClass =
-    run.status === "completed"
+    proposal.status === "approved"
       ? styles.statusOk
-      : run.status === "failed"
+      : proposal.status === "rejected"
         ? styles.statusError
         : styles.statusMeta;
 
   return (
+    <div className={styles.batchBlock}>
+      <button
+        className={styles.payloadToggle}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`}>▶</span>
+        <span>{proposal.proposal_type}</span>
+        <span className={styles.pipe}>|</span>
+        <span className={statusClass}>{proposal.status}</span>
+        {proposal.proposed_title && (
+          <>
+            <span className={styles.pipe}>|</span>
+            <span>{proposal.proposed_title}</span>
+          </>
+        )}
+        {proposal.reason_summary && (
+          <>
+            <span className={styles.pipe}>|</span>
+            <span className={styles.sourceDesc}>{proposal.reason_summary}</span>
+          </>
+        )}
+      </button>
+      {open && <pre className={styles.payloadPre}>{JSON.stringify(proposal, null, 2)}</pre>}
+    </div>
+  );
+}
+
+// ── Run proposals tab ─────────────────────────────────────────────────────────
+
+function RunProposalsTab({
+  runId,
+  proposeResult,
+  proposeError,
+  isPending,
+}: {
+  runId: number;
+  proposeResult: ProposeResult | undefined;
+  proposeError: Error | null;
+  isPending: boolean;
+}) {
+  const proposals = useRunProposals(runId);
+
+  return (
+    <>
+      {isPending && (
+        <div className={styles.statusStrip}>
+          <span className={styles.statusMeta}>running LLM…</span>
+        </div>
+      )}
+      {proposeError && (
+        <div className={styles.statusStrip}>
+          <span className={styles.statusError}>✗ {proposeError.message}</span>
+        </div>
+      )}
+      {proposeResult && (
+        <div className={styles.statusStrip}>
+          <span className={styles.statusOk}>✓ {proposeResult.proposals_saved} proposals saved</span>
+          <span className={styles.statusMeta}>
+            {proposeResult.model} · {proposeResult.input_tokens.toLocaleString()} in ·{" "}
+            {proposeResult.output_tokens.toLocaleString()} out ·{" "}
+            {(proposeResult.duration_ms / 1000).toFixed(1)}s
+          </span>
+        </div>
+      )}
+      {proposals.isLoading && <p className={styles.empty}>loading proposals…</p>}
+      {proposals.data && proposals.data.length === 0 && !isPending && (
+        <p className={styles.empty}>no proposals yet — click propose tasks to generate</p>
+      )}
+      {proposals.data?.map((p) => (
+        <ProposalCard key={p.id} proposal={p} />
+      ))}
+    </>
+  );
+}
+
+// ── Run row ──────────────────────────────────────────────────────────────────
+
+type InnerTab = "sources" | "prompt" | "proposals";
+type DisplayStatus = "running" | "ingested" | "completed" | "failed";
+
+function fmtDateNoYear(dateStr: string): string {
+  const d = new Date(dateStr);
+  const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const time = d
+    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
+    .toLowerCase()
+    .replace(" ", "");
+  return `${date}, ${time}`;
+}
+
+function getDisplayStatus(
+  run: IngestionRunSummary,
+  isProposing: boolean,
+  proposeSuccess: boolean,
+): DisplayStatus {
+  if (isProposing || run.status === "running") return "running";
+  if (run.status === "failed") return "failed";
+  if (run.status === "completed") {
+    if (proposeSuccess || run.proposal_count > 0) return "completed";
+    return "ingested";
+  }
+  return "ingested";
+}
+
+function RunRow({ run }: { run: IngestionRunSummary }) {
+  const [expanded, setExpanded] = useState(false);
+  const [innerTab, setInnerTab] = useState<InnerTab>("sources");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const isPlaceholder = run.id === -1;
+  const detail = useIngestionRun(expanded && !isPlaceholder ? run.id : null);
+  const rerun = useRerunIngestionRun();
+  const deleteRun = useDeleteIngestionRun();
+  const proposeTasks = useProposeTasksForRun();
+
+  const displayStatus = getDisplayStatus(run, proposeTasks.isPending, proposeTasks.isSuccess);
+  const proposalCount = proposeTasks.isSuccess
+    ? proposeTasks.data.proposals_saved
+    : run.proposal_count > 0
+      ? run.proposal_count
+      : null;
+  const tokenCount = proposeTasks.data?.input_tokens ?? null;
+
+  const statusCls = {
+    running: styles.runStatusRunning,
+    ingested: styles.runStatusIngested,
+    completed: styles.runStatusCompleted,
+    failed: styles.runStatusFailed,
+  }[displayStatus];
+
+  return (
     <div className={styles.sourceCard}>
-      <div className={styles.sourceHeader}>
+      <div className={styles.runCardHeader}>
         <button
-          className={styles.runRowToggle}
-          onClick={() => setExpanded((o) => !o)}
+          className={styles.runCardToggle}
+          onClick={() => !isPlaceholder && setExpanded((o) => !o)}
           aria-expanded={expanded}
+          disabled={isPlaceholder}
         >
           <span className={`${styles.chevron} ${expanded ? styles.chevronOpen : ""}`}>▶</span>
-          <span className={statusClass}>{run.status}</span>
-          <span className={styles.pipe}>|</span>
-          <span className={styles.statusMeta}>{run.triggered_by}</span>
-          <span className={styles.pipe}>|</span>
-          <span className={styles.statusMeta}>
-            {run.range_start && run.range_end
-              ? `${run.range_start.slice(0, 10)} → ${run.range_end.slice(0, 10)}`
-              : "no date range"}
+          <span className={`${styles.runStatusBadge} ${statusCls}`}>{displayStatus}</span>
+          <span className={styles.runTriggerLabel}>{run.triggered_by}</span>
+          <span className={styles.runDateRange}>
+            {run.range_start ? fmtDateNoYear(run.range_start) : "?"}
+            {" → "}
+            {run.range_end ? fmtDateNoYear(run.range_end) : "now"}
           </span>
-          <span className={styles.pipe}>|</span>
-          <span className={styles.statusMeta}>{new Date(run.started_at).toLocaleDateString()}</span>
-          {run.finished_at && (
-            <>
-              <span className={styles.pipe}>|</span>
-              <span className={styles.statusMeta}>
-                {(
-                  (new Date(run.finished_at).getTime() - new Date(run.started_at).getTime()) /
-                  1000
-                ).toFixed(1)}
-                s
-              </span>
-            </>
+          {(proposalCount !== null || tokenCount !== null) && (
+            <span className={styles.runMetaChips}>
+              {proposalCount !== null && (
+                <span className={styles.runMetaChip}>
+                  {proposalCount} {proposalCount === 1 ? "proposal" : "proposals"}
+                </span>
+              )}
+              {tokenCount !== null && (
+                <span className={styles.runMetaChip}>~{tokenCount.toLocaleString()} tokens</span>
+              )}
+            </span>
           )}
-          <span className={styles.pipe}>|</span>
-          <span className={styles.statusMeta}>
-            {run.batch_count} {run.batch_count === 1 ? "batch" : "batches"}
-          </span>
-          <span className={styles.pipe}>|</span>
-          <span className={styles.statusMeta}>{run.total_chars.toLocaleString()} chars</span>
         </button>
-        <div className={styles.runActions}>
-          <Button variant="ghost" onClick={() => rerun.mutate(run.id)} disabled={rerun.isPending}>
-            {rerun.isPending ? "re-running…" : "re-run"}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setConfirmDelete(true)}
-            disabled={deleteRun.isPending}
-          >
-            {deleteRun.isPending ? "deleting…" : "delete"}
-          </Button>
-        </div>
+        {!isPlaceholder && (
+          <div className={styles.runActions}>
+            <Button variant="ghost" onClick={() => rerun.mutate(run.id)} disabled={rerun.isPending}>
+              {rerun.isPending ? "re-running…" : "re-run"}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => proposeTasks.mutate(run.id)}
+              disabled={proposeTasks.isPending}
+            >
+              {proposeTasks.isPending ? "proposing…" : "propose tasks"}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setConfirmDelete(true)}
+              disabled={deleteRun.isPending}
+            >
+              {deleteRun.isPending ? "deleting…" : "delete"}
+            </Button>
+          </div>
+        )}
       </div>
 
-      {expanded && (
-        <div className={styles.sourceBody}>
-          {run.error_summary && (
-            <div className={styles.statusStrip}>
-              <span className={styles.statusError}>{run.error_summary}</span>
-            </div>
-          )}
-          {detail.isLoading && <p className={styles.empty}>loading batches…</p>}
-          {detail.data?.batches.map((batch) => (
-            <BatchCard key={batch.id} batch={batch} />
-          ))}
-        </div>
+      {expanded && !isPlaceholder && (
+        <>
+          <div className={styles.innerTabs}>
+            {(["sources", "prompt", "proposals"] as InnerTab[]).map((t) => (
+              <button
+                key={t}
+                className={`${styles.innerTab} ${innerTab === t ? styles.innerTabActive : ""}`}
+                onClick={() => setInnerTab(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <div className={styles.sourceBody}>
+            {innerTab === "sources" && (
+              <>
+                <div className={styles.sourcesStats}>
+                  <span className={styles.statusMeta}>
+                    {run.batch_count} {run.batch_count === 1 ? "batch" : "batches"}
+                  </span>
+                  <span className={styles.pipe}>·</span>
+                  <span className={styles.statusMeta}>
+                    {run.total_chars.toLocaleString()} chars
+                  </span>
+                  {run.finished_at && (
+                    <>
+                      <span className={styles.pipe}>·</span>
+                      <span className={styles.statusMeta}>
+                        {(
+                          (new Date(run.finished_at).getTime() -
+                            new Date(run.started_at).getTime()) /
+                          1000
+                        ).toFixed(1)}
+                        s
+                      </span>
+                    </>
+                  )}
+                </div>
+                {run.error_summary && (
+                  <div className={styles.statusStrip}>
+                    <span className={styles.statusError}>{run.error_summary}</span>
+                  </div>
+                )}
+                {detail.isLoading && <p className={styles.empty}>loading batches…</p>}
+                {detail.data?.batches.map((batch) => (
+                  <BatchCard key={batch.id} batch={batch} />
+                ))}
+              </>
+            )}
+            {innerTab === "prompt" && <RunPromptTab runId={run.id} />}
+            {innerTab === "proposals" && (
+              <RunProposalsTab
+                runId={run.id}
+                proposeResult={proposeTasks.data}
+                proposeError={proposeTasks.error as Error | null}
+                isPending={proposeTasks.isPending}
+              />
+            )}
+          </div>
+        </>
       )}
 
       {confirmDelete && (
@@ -459,197 +704,30 @@ function RunsList() {
   const { data: runs, isLoading } = useIngestionRuns();
 
   if (isLoading) return <p className={styles.empty}>loading runs…</p>;
-  if (!runs?.length) return <p className={styles.empty}>no ingestion runs yet</p>;
 
   return (
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Ingestion Runs</h2>
-      <div className={styles.body}>
-        {runs.map((run) => (
-          <RunRow key={run.id} run={run} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Run selector ─────────────────────────────────────────────────────────────
-
-function RunSelector({
-  selectedId,
-  onSelect,
-}: {
-  selectedId: number | null;
-  onSelect: (id: number | null) => void;
-}) {
-  const { data: runs, isLoading } = useIngestionRuns();
-
-  return (
-    <label className={styles.dateLabel}>
-      run
-      <select
-        className={styles.dateInput}
-        value={selectedId ?? ""}
-        onChange={(e) => onSelect(e.target.value ? Number(e.target.value) : null)}
-        disabled={isLoading}
-      >
-        <option value="">select a run…</option>
-        {runs?.map((run) => (
-          <option key={run.id} value={run.id}>
-            #{run.id} — {run.range_start?.slice(0, 10) ?? "?"} →{" "}
-            {run.range_end?.slice(0, 10) ?? "?"} ({run.status})
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-// ── Prompt section with copy ─────────────────────────────────────────────────
-
-function PromptSection({ title, content }: { title: string; content: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  };
-
-  return (
-    <div className={styles.promptSection}>
-      <div className={styles.promptHeader}>
-        <h3 className={styles.sectionTitle}>{title}</h3>
-        <button className={styles.copyBtn} onClick={handleCopy}>
-          {copied ? "copied" : "copy"}
-        </button>
-      </div>
-      <pre className={styles.payloadPre}>{content}</pre>
-    </div>
-  );
-}
-
-// ── Prompt builder tab ───────────────────────────────────────────────────────
-
-function PromptBuilderTab() {
-  const [runId, setRunId] = useState<number | null>(null);
-  const promptPreview = usePromptPreview();
-
-  return (
-    <div className={styles.section}>
-      <h2 className={styles.sectionTitle}>Prompt Builder</h2>
-      <div className={styles.runForm}>
-        <RunSelector selectedId={runId} onSelect={setRunId} />
-        <Button
-          variant="primary"
-          onClick={() => runId && promptPreview.mutate(runId)}
-          disabled={!runId || promptPreview.isPending}
-        >
-          {promptPreview.isPending ? "generating…" : "generate"}
-        </Button>
-      </div>
-
-      {promptPreview.error && (
-        <div className={styles.statusStrip}>
-          <span className={styles.statusError}>✗ {(promptPreview.error as Error).message}</span>
+      {!runs?.length ? (
+        <p className={styles.empty}>no ingestion runs yet</p>
+      ) : (
+        <div className={styles.body}>
+          {runs.map((run) => (
+            <RunRow key={run.id} run={run} />
+          ))}
         </div>
       )}
-
-      {promptPreview.isSuccess &&
-        promptPreview.data &&
-        (() => {
-          const combined =
-            promptPreview.data.system_prompt + "\n\n---\n\n" + promptPreview.data.user_prompt;
-          const chars = combined.length;
-          return (
-            <>
-              <div className={styles.statusStrip}>
-                <span className={styles.statusOk}>✓ generated</span>
-                <span className={styles.statusMeta}>
-                  {chars.toLocaleString()} chars · {promptPreview.data.token_count.toLocaleString()}{" "}
-                  tokens
-                </span>
-              </div>
-              <PromptSection title="Full Prompt" content={combined} />
-            </>
-          );
-        })()}
-
-      {!promptPreview.isSuccess && !promptPreview.error && !promptPreview.isPending && (
-        <p className={styles.empty}>select a run and click generate to preview the prompt</p>
-      )}
     </div>
   );
 }
-
-// ── LLM tab ──────────────────────────────────────────────────────────────────
-
-function LLMTab() {
-  const [runId, setRunId] = useState<number | null>(null);
-  const llmPreview = useLLMPreview();
-
-  return (
-    <div className={styles.section}>
-      <h2 className={styles.sectionTitle}>LLM Preview</h2>
-      <div className={styles.runForm}>
-        <RunSelector selectedId={runId} onSelect={setRunId} />
-        <Button
-          variant="primary"
-          onClick={() => runId && llmPreview.mutate(runId)}
-          disabled={!runId || llmPreview.isPending}
-        >
-          {llmPreview.isPending ? "running…" : "run LLM"}
-        </Button>
-      </div>
-
-      {llmPreview.error && (
-        <div className={styles.statusStrip}>
-          <span className={styles.statusError}>✗ {(llmPreview.error as Error).message}</span>
-        </div>
-      )}
-
-      {llmPreview.isSuccess && llmPreview.data && (
-        <>
-          <div className={styles.statusStrip}>
-            <span className={styles.statusOk}>✓ completed</span>
-            <span className={styles.statusMeta}>
-              {llmPreview.data.model} · {llmPreview.data.input_tokens.toLocaleString()} in ·{" "}
-              {llmPreview.data.output_tokens.toLocaleString()} out ·{" "}
-              {(llmPreview.data.duration_ms / 1000).toFixed(1)}s
-            </span>
-          </div>
-          <div className={styles.promptSection}>
-            <h3 className={styles.sectionTitle}>Proposals ({llmPreview.data.proposals.length})</h3>
-            <pre className={styles.payloadPre}>
-              {JSON.stringify(llmPreview.data.proposals, null, 2)}
-            </pre>
-          </div>
-          {llmPreview.data.content && (
-            <div className={styles.promptSection}>
-              <h3 className={styles.sectionTitle}>Content</h3>
-              <pre className={styles.payloadPre}>{llmPreview.data.content}</pre>
-            </div>
-          )}
-        </>
-      )}
-
-      {!llmPreview.isSuccess && !llmPreview.error && !llmPreview.isPending && (
-        <p className={styles.empty}>select a run and click run LLM to preview proposals</p>
-      )}
-    </div>
-  );
-}
-
-// ── Tab type ────────────────────────────────────────────────────────────────
-
-type Tab = "runs" | "preview" | "prompt" | "llm";
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+type PageTab = "sources" | "runs";
+
 export default function Ingestion() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tab, setTab] = useState<Tab>("runs");
+  const [tab, setTab] = useState<PageTab>("runs");
   const gmailAuth = useGmailAuth();
 
   useEffect(() => {
@@ -665,57 +743,27 @@ export default function Ingestion() {
         <h1 className={styles.title}>Ingestion</h1>
         <div className={styles.tabs}>
           <button
+            className={`${styles.tab} ${tab === "sources" ? styles.tabActive : ""}`}
+            onClick={() => setTab("sources")}
+          >
+            sources
+          </button>
+          <button
             className={`${styles.tab} ${tab === "runs" ? styles.tabActive : ""}`}
             onClick={() => setTab("runs")}
           >
             runs
           </button>
-          <button
-            className={`${styles.tab} ${tab === "preview" ? styles.tabActive : ""}`}
-            onClick={() => setTab("preview")}
-          >
-            source preview
-          </button>
-          <button
-            className={`${styles.tab} ${tab === "prompt" ? styles.tabActive : ""}`}
-            onClick={() => setTab("prompt")}
-          >
-            prompt builder
-          </button>
-          <button
-            className={`${styles.tab} ${tab === "llm" ? styles.tabActive : ""}`}
-            onClick={() => setTab("llm")}
-          >
-            llm preview
-          </button>
         </div>
       </div>
-
       <div className={styles.body}>
+        {tab === "sources" && <SourcesSection />}
         {tab === "runs" && (
           <>
             <NewRunForm />
             <RunsList />
           </>
         )}
-
-        {tab === "preview" && (
-          <div className={styles.previewCards}>
-            {SOURCES.map((source) => (
-              <SourceCard
-                key={source.id}
-                source={source}
-                authConnected={source.id === "gmail" ? gmailAuth.connected : undefined}
-                onConnect={source.id === "gmail" ? gmailAuth.connect : undefined}
-                connectError={source.id === "gmail" ? gmailAuth.connectError : undefined}
-              />
-            ))}
-          </div>
-        )}
-
-        {tab === "prompt" && <PromptBuilderTab />}
-
-        {tab === "llm" && <LLMTab />}
       </div>
     </div>
   );

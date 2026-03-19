@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { Experience, Task, TaskStatus } from "../../types";
 import { colors } from "../../theme";
-import { formatDueDate, formatExperienceName, isDueSoon } from "../../utils/formatters";
+import { formatDueDate, formatExperienceName, isDueSoon, isOverdue } from "../../utils/formatters";
 import TaskDetail from "./TaskDetail";
 import styles from "./TaskCard.module.css";
 
@@ -28,6 +28,7 @@ export default function TaskCard({
   const isBlocked = task.status === "blocked";
   const dueLabel = formatDueDate(task.due_at);
   const dueSoon = isDueSoon(task.due_at);
+  const overdue = !isDone && isOverdue(task.due_at);
   const expName = experience ? formatExperienceName(experience.folder_path) : null;
 
   function handleComplete(e: React.SyntheticEvent) {
@@ -38,8 +39,8 @@ export default function TaskCard({
 
   return (
     <div
-      className={`${styles.card} ${isDone ? styles.done : ""} ${isBlocked ? styles.blocked : ""}`}
-      style={{ borderLeftColor: isBlocked ? "#c03030" : colors.borderCard }}
+      className={`${styles.card} ${isDone ? styles.done : ""} ${isBlocked ? styles.blocked : ""} ${overdue ? styles.overdue : ""}`}
+      style={{ borderLeftColor: isBlocked || overdue ? "#c03030" : colors.borderCard }}
     >
       <div className={styles.main} onClick={() => !isDone && setExpanded((prev) => !prev)}>
         <div
@@ -63,7 +64,11 @@ export default function TaskCard({
           </div>
           <div className={styles.metaRow}>
             {dueLabel && (
-              <span className={`${styles.due} ${dueSoon ? styles.dueSoon : ""}`}>{dueLabel}</span>
+              <span
+                className={`${styles.due} ${overdue ? styles.dueOverdue : dueSoon ? styles.dueSoon : ""}`}
+              >
+                {dueLabel}
+              </span>
             )}
             {expName && <span className={styles.expBadge}>{expName}</span>}
           </div>

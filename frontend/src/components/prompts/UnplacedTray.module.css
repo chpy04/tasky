@@ -1,0 +1,48 @@
+.tray {
+  position: sticky;
+  bottom: 0;
+  margin-top: 32px;
+  padding: 16px;
+  border: 1px dashed var(--color-border);
+  border-top: 1px solid var(--color-border);
+  border-radius: 4px 4px 0 0;
+  background: #1a1610;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.dragging {
+  border-color: var(--color-accent-focus);
+  background: #1a1610;
+}
+
+.over {
+  border-color: var(--color-accent);
+  background: #1a1610;
+  box-shadow: 0 0 8px rgba(200, 168, 112, 0.15);
+}
+
+.label {
+  display: block;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.empty {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  color: #3e2e1c;
+  font-style: italic;
+}

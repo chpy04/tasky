@@ -1,8 +1,8 @@
 /* src/components/ui/FilterChip.module.css */
 .chip {
   background: transparent;
-  border: 1px solid #3c3428;
-  color: #907a58;
+  border: 1px solid #524230;
+  color: #b09870;
   font-family: "DM Mono", monospace;
   font-size: 15px;
   letter-spacing: 0.06em;
@@ -16,13 +16,13 @@
   white-space: nowrap;
 }
 .chip:hover {
-  color: #c09860;
-  border-color: #5a4a38;
+  color: #d0a870;
+  border-color: #6e5a40;
 }
 .active {
   color: #e8c070;
-  border-color: #7a5830;
-  background: rgba(232, 192, 112, 0.07);
+  border-color: #8a6840;
+  background: rgba(232, 192, 112, 0.1);
 }
 
 .dot {

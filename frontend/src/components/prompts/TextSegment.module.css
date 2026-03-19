@@ -1,0 +1,45 @@
+.text {
+  font-family: "DM Mono", monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--color-text-body);
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 10px 4px;
+  border-radius: 3px;
+  cursor: text;
+  min-height: 20px;
+  transition: background 0.1s ease;
+}
+
+.text:hover {
+  background: rgba(200, 168, 112, 0.04);
+}
+
+.placeholder {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(200, 168, 112, 0.04);
+  border: 1px solid #3e3020;
+  border-radius: 3px;
+  outline: none;
+  resize: none;
+  font-family: "DM Mono", monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--color-text-body);
+  padding: 10px 4px;
+  min-height: 40px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.textarea:focus {
+  border-color: var(--color-accent-focus);
+}

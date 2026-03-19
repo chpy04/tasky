@@ -48,6 +48,16 @@ function ProposalsIcon() {
   );
 }
 
+function PromptsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M2 2h7l3 3v7H2V2z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M4 6h6M4 8h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -99,6 +109,9 @@ export default function Sidebar() {
       </NavIcon>
       <NavIcon to="/proposals" label="Proposals">
         <ProposalsIcon />
+      </NavIcon>
+      <NavIcon to="/prompts" label="Prompts">
+        <PromptsIcon />
       </NavIcon>
       <div className={styles.spacer} />
       <NavIcon to="/settings" label="Settings">

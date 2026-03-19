@@ -1,0 +1,33 @@
+.zone {
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  border: 1px dashed transparent;
+  opacity: 0.3;
+  transition:
+    height 0.12s ease,
+    opacity 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+  box-sizing: border-box;
+}
+
+.active {
+  height: 20px;
+  border-color: var(--color-accent-focus);
+  opacity: 0.6;
+  background: rgba(200, 168, 112, 0.04);
+}
+
+.over {
+  height: 24px;
+  border: 1px solid var(--color-accent);
+  opacity: 1;
+  background: rgba(200, 168, 112, 0.08);
+  box-shadow: 0 0 8px rgba(200, 168, 112, 0.25);
+}
+
+.chainLinkZone {
+  height: 0;
+  overflow: hidden;
+}

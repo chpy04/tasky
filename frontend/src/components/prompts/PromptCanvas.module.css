@@ -1,0 +1,12 @@
+.canvas {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 0;
+}
+
+.pairedOverlay {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}

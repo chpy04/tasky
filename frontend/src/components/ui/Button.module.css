@@ -19,12 +19,12 @@
 /* ghost — default secondary action */
 .ghost {
   background: transparent;
-  border-color: #3c3428;
-  color: #907a58;
+  border-color: #4e4030;
+  color: #b09870;
 }
 .ghost:hover:not(:disabled) {
-  border-color: #7a6848;
-  color: #c09860;
+  border-color: #907060;
+  color: #d0aa70;
 }
 
 /* primary — main call to action (Playfair italic) */
@@ -39,7 +39,7 @@
   color: #e8c070;
 }
 .primary:hover:not(:disabled) {
-  background: rgba(232, 192, 112, 0.08);
+  background: rgba(232, 192, 112, 0.1);
 }
 
 /* danger — destructive action */

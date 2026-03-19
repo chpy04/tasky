@@ -68,6 +68,7 @@ export interface IngestionRunSummary {
   error_summary: string | null;
   batch_count: number;
   total_chars: number;
+  proposal_count: number;
 }
 
 export interface IngestionRunDetail extends IngestionRunSummary {
@@ -112,7 +113,34 @@ export function useCreateIngestionRun() {
       }
       return res.json() as Promise<IngestionRunDetail>;
     },
-    onSuccess: () => {
+    onMutate: async (params) => {
+      await qc.cancelQueries({ queryKey: ["ingestion-runs"] });
+      const previous = qc.getQueryData<IngestionRunSummary[]>(["ingestion-runs"]);
+      const placeholder: IngestionRunSummary = {
+        id: -1,
+        started_at: new Date().toISOString(),
+        finished_at: null,
+        status: "running",
+        triggered_by: "manual",
+        range_start: params.start_date,
+        range_end: params.end_date ?? null,
+        error_summary: null,
+        batch_count: 0,
+        total_chars: 0,
+        proposal_count: 0,
+      };
+      qc.setQueryData<IngestionRunSummary[]>(["ingestion-runs"], (old) => [
+        placeholder,
+        ...(old ?? []),
+      ]);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(["ingestion-runs"], context.previous);
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
     },
   });
@@ -153,6 +181,76 @@ export function useDeleteIngestionRun() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
+    },
+  });
+}
+
+// ── Per-run proposals ─────────────────────────────────────────────────────────
+
+export interface RunProposal {
+  id: number;
+  proposal_type: string;
+  status: string;
+  task_id: number | null;
+  proposed_title: string | null;
+  proposed_description: string | null;
+  proposed_status: string | null;
+  proposed_due_at: string | null;
+  proposed_external_ref: string | null;
+  reason_summary: string | null;
+  created_at: string;
+}
+
+export interface ProposeResult {
+  run_id: number;
+  model: string;
+  proposals_saved: number;
+  input_tokens: number;
+  output_tokens: number;
+  duration_ms: number;
+}
+
+export function useRunProposals(runId: number | null) {
+  return useQuery<RunProposal[]>({
+    queryKey: ["ingestion-run-proposals", runId],
+    queryFn: async () => {
+      const res = await fetch(`/api/ingestion/runs/${runId}/proposals`);
+      if (!res.ok) throw new Error("Failed to fetch proposals");
+      return res.json();
+    },
+    enabled: runId !== null,
+  });
+}
+
+export function useRunPrompt(runId: number | null) {
+  return useQuery<PromptPreviewResult>({
+    queryKey: ["ingestion-run-prompt", runId],
+    queryFn: async () => {
+      const res = await fetch(`/api/ingestion/runs/${runId}/prompt-preview`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => res.statusText);
+        throw new Error(`Prompt preview failed (${res.status}): ${body}`);
+      }
+      return res.json();
+    },
+    enabled: runId !== null,
+  });
+}
+
+export function useProposeTasksForRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (runId: number): Promise<ProposeResult> => {
+      const res = await fetch(`/api/ingestion/runs/${runId}/propose`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.text().catch(() => res.statusText);
+        throw new Error(`Propose failed (${res.status}): ${body}`);
+      }
+      return res.json();
+    },
+    onSuccess: (_data, runId) => {
+      qc.invalidateQueries({ queryKey: ["ingestion-run-proposals", runId] });
+      qc.invalidateQueries({ queryKey: ["proposals"] });
     },
   });
 }
@@ -200,6 +298,36 @@ export function useLLMPreview() {
         throw new Error(`LLM preview failed (${res.status}): ${body}`);
       }
       return res.json() as Promise<LLMPreviewResult>;
+    },
+  });
+}
+
+// ── Sync (full pipeline) ─────────────────────────────────────────────────────
+
+export interface SyncResult {
+  run_id: number;
+  status: string;
+  proposals_saved: number;
+  duration_ms?: number;
+  input_tokens?: number;
+  output_tokens?: number;
+  error?: string;
+}
+
+export function useSyncPipeline() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<SyncResult> => {
+      const res = await fetch("/api/ingestion/sync", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.text().catch(() => res.statusText);
+        throw new Error(`Sync failed (${res.status}): ${body}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
+      qc.invalidateQueries({ queryKey: ["proposals"] });
     },
   });
 }

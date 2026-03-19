@@ -29,8 +29,9 @@
   border: 1px solid rgba(232, 192, 112, 0.3);
 }
 
+/* amber instead of red */
 .cancel_task {
-  color: #ff4444;
-  background: rgba(255, 68, 68, 0.12);
-  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #c89040;
+  background: rgba(180, 130, 40, 0.12);
+  border: 1px solid rgba(180, 130, 40, 0.35);
 }

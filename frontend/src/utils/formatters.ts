@@ -36,6 +36,15 @@ export function isDueSoon(dueDateStr: string | null): boolean {
 }
 
 /**
+ * Returns true if the due date is in the past.
+ */
+export function isOverdue(dueDateStr: string | null): boolean {
+  if (!dueDateStr) return false;
+  const due = new Date(dueDateStr);
+  return due.getTime() < Date.now();
+}
+
+/**
  * Returns true if the given ISO datetime string is today (local timezone).
  */
 export function isToday(dateStr: string): boolean {

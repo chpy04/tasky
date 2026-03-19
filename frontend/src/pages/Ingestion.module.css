@@ -9,16 +9,16 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #15120c;
+  background: #1e1912;
   padding: 28px 36px 0;
-  border-bottom: 1px solid #2a2118;
+  border-bottom: 1px solid #2e2820;
 }
 
 .title {
   font-family: "Playfair Display", serif;
   font-style: italic;
   font-size: 22px;
-  color: #c09060;
+  color: #c8a870;
   margin: 0 0 16px;
   font-weight: 400;
 }
@@ -39,7 +39,7 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #5e4e38;
+  color: #806848;
   cursor: pointer;
   transition:
     color 0.15s,
@@ -47,12 +47,12 @@
 }
 
 .tab:hover {
-  color: #907a58;
+  color: #a89060;
 }
 
 .tabActive {
-  color: #c09060;
-  border-bottom-color: #c09060;
+  color: #c8a870;
+  border-bottom-color: #c8a870;
 }
 
 .body {
@@ -65,7 +65,7 @@
 /* ── Source card ─────────────────────────────────────── */
 
 .sourceCard {
-  border: 1px solid #2a2118;
+  border: 1px solid #2e2820;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -75,8 +75,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  background: #1b1610;
-  border-bottom: 1px solid #2a2118;
+  background: #252018;
+  border-bottom: 1px solid #2e2820;
 }
 
 .sourceTitle {
@@ -90,19 +90,19 @@
   font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #907a58;
+  color: #b09870;
 }
 
 .sourceDesc {
   font-family: "DM Mono", monospace;
   font-size: 11px;
-  color: #4a3e2c;
+  color: #706050;
   letter-spacing: 0.06em;
 }
 
 .sourceBody {
   padding: 20px;
-  background: #15120c;
+  background: #1e1912;
 }
 
 /* ── Status strip ────────────────────────────────────── */
@@ -118,7 +118,7 @@
 }
 
 .statusOk {
-  color: #6a9a5a;
+  color: #6aaa5a;
 }
 
 .statusError {
@@ -126,7 +126,7 @@
 }
 
 .statusMeta {
-  color: #5e4e38;
+  color: #806848;
 }
 
 /* ── Batch block ─────────────────────────────────────── */
@@ -138,7 +138,7 @@
 }
 
 .batchBlock {
-  border: 1px solid #2a2118;
+  border: 1px solid #2e2820;
   border-radius: 3px;
   overflow: hidden;
 }
@@ -157,18 +157,18 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #5e4e38;
+  color: #806848;
   text-align: left;
   transition: color 0.15s;
 }
 
 .payloadToggle:hover {
-  color: #907a58;
+  color: #a89060;
 }
 
 .payloadToggle[aria-expanded="true"] {
-  border-bottom-color: #2a2118;
-  color: #907a58;
+  border-bottom-color: #2e2820;
+  color: #a89060;
 }
 
 .chevron {
@@ -184,11 +184,11 @@
 .payloadPre {
   margin: 0;
   padding: 14px;
-  background: #0f0d09;
+  background: #161310;
   font-family: "DM Mono", monospace;
   font-size: 11px;
   line-height: 1.7;
-  color: #7a6848;
+  color: #a08060;
   overflow-x: auto;
   max-height: 420px;
   overflow-y: auto;
@@ -200,7 +200,7 @@
 .empty {
   font-family: "DM Mono", monospace;
   font-size: 12px;
-  color: #4a3e2c;
+  color: #706050;
   letter-spacing: 0.06em;
   font-style: italic;
 }
@@ -213,12 +213,24 @@
   gap: 16px;
 }
 
+.sectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.sectionRow .sectionTitle {
+  margin-bottom: 0;
+}
+
 .sectionTitle {
   font-family: "DM Mono", monospace;
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #5e4e38;
+  color: #806848;
   margin: 0;
   font-weight: 400;
 }
@@ -245,57 +257,202 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #5e4e38;
+  color: #806848;
 }
 
 .dateInput {
-  background: #1b1610;
-  border: 1px solid #2a2118;
+  background: #252018;
+  border: 1px solid #2e2820;
   border-radius: 3px;
   padding: 8px 12px;
   font-family: "DM Mono", monospace;
   font-size: 12px;
-  color: #c09060;
+  color: #c8a870;
   color-scheme: dark;
 }
 
 .dateInput:focus {
   outline: none;
-  border-color: #907a58;
+  border-color: #a89060;
 }
 
-/* ── Run row ────────────────────────────────────────── */
+/* ── Run card (collapsed header) ────────────────────── */
 
-.runRowToggle {
+.runCardHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #252018;
+  border-bottom: 1px solid transparent;
+}
+
+.runCardHeader:has(+ *) {
+  border-bottom-color: #2e2820;
+}
+
+.runCardToggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: transparent;
   border: none;
   cursor: pointer;
+  padding: 0;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  color: #b09870;
+}
+
+.runCardToggle:disabled {
+  cursor: default;
+}
+
+/* Status badge */
+
+.runStatusBadge {
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
+.runStatusRunning {
+  color: #c8a870;
+  border-color: #5a4820;
+  background: #2a2010;
+  animation: runPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes runPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.runStatusIngested {
+  color: #6090b0;
+  border-color: #204050;
+  background: #182530;
+}
+
+.runStatusCompleted {
+  color: #6aaa5a;
+  border-color: #284820;
+  background: #182818;
+}
+
+.runStatusFailed {
+  color: #c84040;
+  border-color: #501818;
+  background: #281010;
+}
+
+/* Trigger label */
+
+.runTriggerLabel {
   font-family: "DM Mono", monospace;
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: #907a58;
-  padding: 0;
-  text-align: left;
+  color: #706050;
+  flex-shrink: 0;
 }
 
-.runRowToggle:hover {
-  color: #c09060;
+/* Date range */
+
+.runDateRange {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #b09870;
+}
+
+/* Meta chips */
+
+.runMetaChips {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.runMetaChip {
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #706050;
+  background: #1a1810;
+  border: 1px solid #2e2820;
+  border-radius: 3px;
+  padding: 2px 8px;
 }
 
 .runActions {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Sources stats row */
+
+.sourcesStats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
 }
 
 /* ── Pipe separator ─────────────────────────────────── */
 
 .pipe {
-  color: #2a2118;
+  color: #3a3020;
   font-family: "DM Mono", monospace;
   font-size: 11px;
+}
+
+/* ── Inner tabs (per-run) ────────────────────────────── */
+
+.innerTabs {
+  display: flex;
+  border-bottom: 1px solid #2e2820;
+  background: #1e1912;
+  padding: 0 20px;
+}
+
+.innerTab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 6px 14px;
+  margin-bottom: -1px;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #706050;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.innerTab:hover {
+  color: #806848;
+}
+
+.innerTabActive {
+  color: #b09870;
+  border-bottom-color: #7a6040;
 }
 
 /* ── Prompt section ────────────────────────────────── */
@@ -312,16 +469,120 @@
   justify-content: space-between;
 }
 
+/* ── Prompt markdown renderer ──────────────────────────── */
+
+.promptMarkdown {
+  padding: 14px;
+  background: #161310;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  color: #a08060;
+  max-height: 600px;
+  overflow-y: auto;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.promptMarkdown p {
+  margin: 0 0 0.75em;
+}
+
+.promptMarkdown p:last-child {
+  margin-bottom: 0;
+}
+
+.promptMarkdown h1,
+.promptMarkdown h2,
+.promptMarkdown h3,
+.promptMarkdown h4 {
+  color: #c8a870;
+  font-weight: 600;
+  margin: 1.25em 0 0.4em;
+  letter-spacing: 0.06em;
+}
+
+.promptMarkdown h1 {
+  font-size: 14px;
+}
+.promptMarkdown h2 {
+  font-size: 13px;
+}
+.promptMarkdown h3 {
+  font-size: 12px;
+}
+.promptMarkdown h4 {
+  font-size: 11px;
+}
+
+.promptMarkdown strong {
+  color: #c8a870;
+  font-weight: 600;
+}
+
+.promptMarkdown em {
+  font-style: italic;
+  color: #a89060;
+}
+
+.promptMarkdown hr {
+  border: none;
+  border-top: 1px solid #2e2820;
+  margin: 1em 0;
+}
+
+.promptMarkdown code {
+  background: #252018;
+  border: 1px solid #2e2820;
+  border-radius: 2px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: "DM Mono", monospace;
+}
+
+.promptMarkdown pre {
+  background: #161310;
+  border: 1px solid #2e2820;
+  border-radius: 3px;
+  padding: 10px 14px;
+  margin: 0.5em 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.promptMarkdown pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.promptMarkdown ul,
+.promptMarkdown ol {
+  padding-left: 1.5em;
+  margin: 0.25em 0 0.75em;
+}
+
+.promptMarkdown li {
+  margin: 0.2em 0;
+}
+
+.promptMarkdown blockquote {
+  border-left: 2px solid #2e2820;
+  padding-left: 12px;
+  margin: 0.5em 0;
+  color: #806848;
+}
+
 .copyBtn {
   background: transparent;
-  border: 1px solid #2a2118;
+  border: 1px solid #2e2820;
   border-radius: 3px;
   padding: 4px 10px;
   font-family: "DM Mono", monospace;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #5e4e38;
+  color: #806848;
   cursor: pointer;
   transition:
     color 0.15s,
@@ -329,6 +590,6 @@
 }
 
 .copyBtn:hover {
-  color: #c09060;
-  border-color: #907a58;
+  color: #c8a870;
+  border-color: #a89060;
 }

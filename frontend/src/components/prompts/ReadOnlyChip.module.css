@@ -1,0 +1,129 @@
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 8px;
+  background: var(--color-ro-bg);
+  border: 1px dashed var(--color-ro-border);
+  border-radius: 5px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color 0.1s ease,
+    background 0.1s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chip:hover {
+  background: #1c1e2a;
+  border-color: #3a3c50;
+}
+
+.selected {
+  border-color: #7a6ec8;
+  background: #1a1830;
+}
+
+.compact {
+  width: auto;
+  padding: 6px 10px 6px 6px;
+}
+
+.dragging {
+  opacity: 0.88;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+}
+
+.ghost {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.handle {
+  color: #3a3c50;
+  font-size: 15px;
+  cursor: grab;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.handle:active {
+  cursor: grabbing;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+}
+
+.compact .badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.glyph {
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.compact .glyph {
+  font-size: 11px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.label {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ro-label);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.compact .label {
+  font-size: 11px;
+}
+
+.lockDot {
+  font-size: 12px;
+  color: #3a3c50;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.selected .label {
+  color: #b0a4e0;
+}
+
+.selected .lockDot {
+  color: #5a5880;
+}
+
+.connectedTop {
+  margin-left: 20px;
+  width: calc(100% - 20px);
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+.connectedLeft {
+  transform: scale(0.88);
+  transform-origin: left center;
+}

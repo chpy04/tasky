@@ -1,0 +1,153 @@
+.composer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Save bar ─────────────────────────────────────────── */
+
+.saveBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 32px;
+  background: #1a1610;
+  border-bottom: 1px solid #2e2820;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.saveBarDirty {
+  background: #1e1a0e;
+  border-bottom-color: #4a3c18;
+}
+
+.saveBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unsavedDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c8a030;
+  flex-shrink: 0;
+}
+
+.saveBarStatus {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #5e4e38;
+  transition: color 0.2s;
+}
+
+.saveBarDirty .saveBarStatus {
+  color: #a08030;
+}
+
+.saveBarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.discardBtn {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid #4e4030;
+  color: #906840;
+  border-radius: 3px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.discardBtn:hover:not(:disabled) {
+  border-color: #7a6040;
+  color: #b08858;
+}
+
+.discardBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.saveBtn {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid #3a3020;
+  color: #4e4030;
+  border-radius: 3px;
+  padding: 4px 14px;
+  cursor: not-allowed;
+  transition: all 0.2s;
+}
+
+.saveBtnActive {
+  border-color: #b09040;
+  color: #e8c070;
+  cursor: pointer;
+}
+
+.saveBtnActive:hover:not(:disabled) {
+  background: rgba(232, 192, 112, 0.1);
+  border-color: #c8a850;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kbd {
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  opacity: 0.55;
+  font-style: normal;
+  letter-spacing: 0;
+}
+
+/* ── Panels ───────────────────────────────────────────── */
+
+.panels {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.canvasPanel {
+  flex: 62;
+  overflow-y: auto;
+  padding: 28px 32px;
+  min-width: 0;
+}
+
+.divider {
+  width: 1px;
+  background: #2e2820;
+  flex-shrink: 0;
+}
+
+.editorPanel {
+  flex: 38;
+  overflow-y: auto;
+  padding: 28px 28px;
+  display: flex;
+  flex-direction: column;
+  min-width: 280px;
+  max-width: 480px;
+  position: relative;
+}

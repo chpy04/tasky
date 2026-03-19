@@ -1,7 +1,7 @@
 /* ProposalCard.module.css */
 .card {
-  background: #201408;
-  border: 1px solid #362010;
+  background: #3a301e;
+  border: 1px solid #503e2c;
   border-left: 3px solid transparent;
   border-radius: 3px;
   padding: 12px 14px;
@@ -15,12 +15,12 @@
 }
 
 .card:hover {
-  background: #281a0a;
+  background: #473c28;
 }
 
 .selected {
   border-left-color: #e8c070;
-  background: #281a0a;
+  background: #473c28;
 }
 
 .topRow {
@@ -40,7 +40,7 @@
 .title {
   font-family: "DM Mono", monospace;
   font-size: 14px;
-  color: #f0ddb8;
+  color: #f5e8cc;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
@@ -50,14 +50,14 @@
 .reason {
   font-family: "DM Mono", monospace;
   font-size: 12px;
-  color: #6a5038;
+  color: #a08060;
   line-height: 1.5;
 }
 
 .source {
   font-family: "DM Mono", monospace;
   font-size: 11px;
-  color: #5a3e22;
+  color: #806848;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

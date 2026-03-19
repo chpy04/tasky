@@ -2,7 +2,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,8 +10,8 @@
 }
 
 .dialog {
-  background: #171410;
-  border: 1px solid #7e6a48;
+  background: #252018;
+  border: 1px solid #9a8060;
   border-radius: 3px;
   width: 750px;
   max-width: calc(100vw - 60px);
@@ -22,8 +22,8 @@
 }
 
 .header {
-  background: #100e08;
-  border-bottom: 1px solid #3c3428;
+  background: #17140e;
+  border-bottom: 1px solid #4e4030;
   padding: 21px 27px;
   display: flex;
   align-items: center;
@@ -42,7 +42,7 @@
 .closeBtn {
   background: transparent;
   border: none;
-  color: #7e6a48;
+  color: #a08a60;
   font-size: 18px;
   cursor: pointer;
   transition: color 0.15s;
@@ -51,7 +51,7 @@
   border-radius: 3px;
 }
 .closeBtn:hover {
-  color: #a07840;
+  color: #c8a050;
 }
 
 .body {
@@ -61,11 +61,11 @@
 }
 
 .footer {
-  border-top: 1px solid #3c3428;
+  border-top: 1px solid #4e4030;
   padding: 18px 27px;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   flex-shrink: 0;
-  background: #100e08;
+  background: #17140e;
 }

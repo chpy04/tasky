@@ -1,8 +1,8 @@
 /* src/components/layout/Sidebar.module.css */
 .sidebar {
   width: 66px;
-  background: #0c0a07;
-  border-right: 1px solid #3c3428;
+  background: #0f0d09;
+  border-right: 1px solid #4e4030;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,7 +17,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #706050;
+  color: #907060;
   font-size: 19px;
   cursor: pointer;
   border-radius: 3px;
@@ -26,13 +26,13 @@
   text-decoration: none;
 }
 .navIcon:hover {
-  color: #a07840;
-  border-color: #3c3428;
+  color: #c09050;
+  border-color: #4e4030;
 }
 .active {
   color: #e8c070;
-  border-color: #5a4a38;
-  background: rgba(232, 192, 112, 0.07);
+  border-color: #6a5840;
+  background: rgba(232, 192, 112, 0.09);
 }
 
 .spacer {

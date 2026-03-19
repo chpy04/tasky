@@ -141,18 +141,24 @@ def preview_canvas(since_days: int = _SINCE_DAYS) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def _utc_iso(dt) -> str:
+    """Return an ISO string with explicit UTC offset so JS parses it as UTC."""
+    return dt.replace(tzinfo=timezone.utc).isoformat()
+
+
 def _run_to_summary(run) -> dict:
     return {
         "id": run.id,
-        "started_at": run.started_at.isoformat(),
-        "finished_at": run.finished_at.isoformat() if run.finished_at else None,
+        "started_at": _utc_iso(run.started_at),
+        "finished_at": _utc_iso(run.finished_at) if run.finished_at else None,
         "status": run.status.value,
         "triggered_by": run.triggered_by.value,
-        "range_start": run.range_start.isoformat() if run.range_start else None,
-        "range_end": run.range_end.isoformat() if run.range_end else None,
+        "range_start": _utc_iso(run.range_start) if run.range_start else None,
+        "range_end": _utc_iso(run.range_end) if run.range_end else None,
         "error_summary": run.error_summary,
         "batch_count": len(run.batches),
         "total_chars": sum(len(b.raw_payload) for b in run.batches),
+        "proposal_count": sum(len(b.proposals) for b in run.batches),
     }
 
 
@@ -220,6 +226,19 @@ def rerun(run_id: int, db: Session = Depends(get_db)):
     return _run_to_detail(run)
 
 
+@router.post("/sync")
+def sync(db: Session = Depends(get_db)):
+    """Run a full ingestion + LLM pipeline from the last run's end time to now.
+
+    Determines range_start automatically from the most recent run's range_end,
+    falling back to 24 hours ago if no prior runs exist.
+    """
+    from app.jobs.ingestion_job import run_full_pipeline
+    from app.models.ingestion_run import TriggeredBy
+
+    return run_full_pipeline(db, triggered_by=TriggeredBy.manual)
+
+
 @router.delete("/runs/{run_id}")
 def delete_run(run_id: int, db: Session = Depends(get_db)):
     from app.services.ingestion_service import IngestionService
@@ -228,6 +247,130 @@ def delete_run(run_id: int, db: Session = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="Run not found")
     return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Proposal endpoints (per-run)
+# ---------------------------------------------------------------------------
+
+
+def _proposal_to_dict(p) -> dict:
+    return {
+        "id": p.id,
+        "proposal_type": p.proposal_type.value,
+        "status": p.status.value,
+        "task_id": p.task_id,
+        "proposed_title": p.proposed_title,
+        "proposed_description": p.proposed_description,
+        "proposed_status": p.proposed_status.value if p.proposed_status else None,
+        "proposed_due_at": p.proposed_due_at.isoformat() if p.proposed_due_at else None,
+        "proposed_external_ref": p.proposed_external_ref,
+        "reason_summary": p.reason_summary,
+        "created_at": p.created_at.isoformat(),
+    }
+
+
+@router.get("/runs/{run_id}/proposals")
+def get_run_proposals(run_id: int, db: Session = Depends(get_db)):
+    """Return all proposals associated with a run's batches."""
+    from app.models.task_proposal import TaskProposal
+    from app.services.ingestion_service import IngestionService
+
+    run = IngestionService(db).get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    batch_ids = [b.id for b in run.batches]
+    if not batch_ids:
+        return []
+
+    proposals = db.query(TaskProposal).filter(TaskProposal.ingestion_batch_id.in_(batch_ids)).all()
+    return [_proposal_to_dict(p) for p in proposals]
+
+
+@router.post("/runs/{run_id}/propose")
+def propose_tasks(run_id: int, db: Session = Depends(get_db)):
+    """Run LLM proposal generation for a run.
+
+    Deletes all existing proposals for this run's batches, then calls the LLM
+    and saves the new proposals with status=pending.
+    """
+    from app.llm.client import LLMClient, LLMError
+    from app.llm.prompt_builder import build_proposal_prompt
+    from app.models.experience import Experience
+    from app.models.task import Task, TaskStatus
+    from app.models.task_proposal import ProposalCreatedBy, ProposalType, TaskProposal
+    from app.services.ingestion_service import IngestionService
+
+    run = IngestionService(db).get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    # Delete existing proposals for this run's batches.
+    batch_ids = [b.id for b in run.batches]
+    if batch_ids:
+        db.query(TaskProposal).filter(TaskProposal.ingestion_batch_id.in_(batch_ids)).delete(
+            synchronize_session=False
+        )
+        db.commit()
+
+    active_tasks = (
+        db.query(Task).filter(Task.status.notin_([TaskStatus.done, TaskStatus.cancelled])).all()
+    )
+    active_experiences = db.query(Experience).filter(Experience.active.is_(True)).all()
+    experience_name_to_id = {exp.folder_path: exp.id for exp in active_experiences}
+
+    system_prompt, user_prompt = build_proposal_prompt(run, db, active_tasks, active_experiences)
+
+    try:
+        t0 = time.monotonic()
+        result = LLMClient().generate_proposals_with_meta(system_prompt, user_prompt)
+        duration_ms = round((time.monotonic() - t0) * 1000)
+    except LLMError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+    batch_id = run.batches[0].id if run.batches else None
+    now = datetime.now(timezone.utc)
+    saved = []
+    for p in result.batch.proposals:
+        due_at = None
+        if p.proposed_due_at:
+            try:
+                due_at = datetime.fromisoformat(p.proposed_due_at.replace("Z", "+00:00"))
+            except ValueError:
+                pass
+        experience_id = (
+            experience_name_to_id.get(p.proposed_experience_name)
+            if p.proposed_experience_name
+            else None
+        )
+        proposal = TaskProposal(
+            proposal_type=ProposalType(p.proposal_type),
+            status="pending",
+            task_id=p.task_id,
+            proposed_title=p.proposed_title,
+            proposed_description=p.proposed_description,
+            proposed_status=p.proposed_status,
+            proposed_experience_id=experience_id,
+            proposed_due_at=due_at,
+            proposed_external_ref=p.proposed_external_ref,
+            reason_summary=p.reason_summary,
+            created_at=now,
+            created_by=ProposalCreatedBy.ai,
+            ingestion_batch_id=batch_id,
+        )
+        db.add(proposal)
+        saved.append(proposal)
+    db.commit()
+
+    return {
+        "run_id": run.id,
+        "model": result.model,
+        "proposals_saved": len(saved),
+        "input_tokens": result.input_tokens,
+        "output_tokens": result.output_tokens,
+        "duration_ms": duration_ms,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -243,7 +386,6 @@ def prompt_preview(run_id: int, db: Session = Depends(get_db)):
     from app.models.experience import Experience
     from app.models.task import Task, TaskStatus
     from app.services.ingestion_service import IngestionService
-    from app.vault.reader import VaultReader
 
     run = IngestionService(db).get_run(run_id)
     if not run:
@@ -254,8 +396,7 @@ def prompt_preview(run_id: int, db: Session = Depends(get_db)):
     )
     active_experiences = db.query(Experience).filter(Experience.active.is_(True)).all()
 
-    vault = VaultReader()
-    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks, active_experiences)
+    system_prompt, user_prompt = build_proposal_prompt(run, db, active_tasks, active_experiences)
 
     enc = tiktoken.encoding_for_model("gpt-4o")
     token_count = len(enc.encode(system_prompt + user_prompt))
@@ -276,7 +417,6 @@ def llm_preview(run_id: int, db: Session = Depends(get_db)):
     from app.models.task import Task, TaskStatus
     from app.models.task_proposal import ProposalCreatedBy, ProposalType, TaskProposal
     from app.services.ingestion_service import IngestionService
-    from app.vault.reader import VaultReader
 
     run = IngestionService(db).get_run(run_id)
     if not run:
@@ -288,8 +428,7 @@ def llm_preview(run_id: int, db: Session = Depends(get_db)):
     active_experiences = db.query(Experience).filter(Experience.active.is_(True)).all()
     experience_name_to_id = {exp.folder_path: exp.id for exp in active_experiences}
 
-    vault = VaultReader()
-    system_prompt, user_prompt = build_proposal_prompt(run, vault, active_tasks, active_experiences)
+    system_prompt, user_prompt = build_proposal_prompt(run, db, active_tasks, active_experiences)
 
     try:
         t0 = time.monotonic()

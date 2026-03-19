@@ -1,7 +1,7 @@
 /* src/components/layout/Topbar.module.css */
 .topbar {
-  background: #100e08;
-  border-bottom: 2px solid #4a4030;
+  background: #13100a;
+  border-bottom: 2px solid #6a5840;
   padding: 0 33px;
   display: flex;
   align-items: stretch;
@@ -47,7 +47,7 @@
 .logoSub {
   font-family: "DM Mono", monospace;
   font-size: 12px;
-  color: #7e6a48;
+  color: #a08a62;
   letter-spacing: 0.25em;
   text-transform: uppercase;
   margin-top: 3px;
@@ -55,7 +55,7 @@
 
 .divider {
   width: 1px;
-  background: #3c3428;
+  background: #4e4030;
   margin: 15px 0;
   flex-shrink: 0;
 }
@@ -77,7 +77,7 @@
 
 .statLabel {
   font-size: 12px;
-  color: #7e6a48;
+  color: #a08a62;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -91,9 +91,9 @@
 }
 
 .aiPill {
-  background: rgba(90, 140, 55, 0.15);
-  border: 1px solid rgba(120, 180, 70, 0.3);
-  color: rgba(155, 220, 95, 0.9);
+  background: rgba(90, 140, 55, 0.18);
+  border: 1px solid rgba(120, 180, 70, 0.4);
+  color: rgba(165, 230, 105, 0.95);
   font-family: "DM Mono", monospace;
   font-size: 15px;
   letter-spacing: 0.08em;
@@ -107,14 +107,14 @@
   gap: 9px;
 }
 .aiPill:hover {
-  background: rgba(90, 140, 55, 0.25);
+  background: rgba(90, 140, 55, 0.3);
 }
 
 .aiDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(155, 220, 95, 0.9);
+  background: rgba(165, 230, 105, 0.95);
   flex-shrink: 0;
 }
 
@@ -143,4 +143,55 @@
 .addTaskBtn:active {
   transform: translateY(0);
   box-shadow: none;
+}
+
+.syncBtn {
+  background: transparent;
+  border: 1px solid #5a4a38;
+  color: #c0a870;
+  font-family: "DM Mono", monospace;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  padding: 9px 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.syncBtn:hover:not(:disabled) {
+  background: rgba(90, 72, 50, 0.3);
+  color: #d8b878;
+  border-color: #7a6040;
+}
+.syncBtn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.syncIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.syncSpinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #7a6040;
+  border-top-color: #d8b878;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
 }

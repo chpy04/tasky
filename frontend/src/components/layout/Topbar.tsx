@@ -1,7 +1,9 @@
 // src/components/layout/Topbar.tsx
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Task } from "../../types";
 import { usePendingProposalCount } from "../../api/useProposals";
+import { useSyncPipeline } from "../../api/useIngestion";
 import styles from "./Topbar.module.css";
 
 interface TopbarProps {
@@ -36,6 +38,22 @@ function LogoCup() {
 export default function Topbar({ tasks, onNewTask }: TopbarProps) {
   const navigate = useNavigate();
   const pendingProposals = usePendingProposalCount();
+  const sync = useSyncPipeline();
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  function handleSync() {
+    setSyncMessage(null);
+    sync.mutate(undefined, {
+      onSuccess: (data) => {
+        setSyncMessage(`+${data.proposals_saved} proposal${data.proposals_saved !== 1 ? "s" : ""}`);
+        setTimeout(() => setSyncMessage(null), 4000);
+      },
+      onError: () => {
+        setSyncMessage("sync failed");
+        setTimeout(() => setSyncMessage(null), 4000);
+      },
+    });
+  }
 
   const openCount = tasks.filter((t) =>
     ["todo", "in_progress", "blocked"].includes(t.status),
@@ -66,6 +84,19 @@ export default function Topbar({ tasks, onNewTask }: TopbarProps) {
       </div>
 
       <div className={styles.right}>
+        <button
+          className={styles.syncBtn}
+          onClick={handleSync}
+          disabled={sync.isPending}
+          title="Ingest from last sync to now and generate proposals"
+        >
+          {sync.isPending ? (
+            <span className={styles.syncSpinner} />
+          ) : (
+            <span className={styles.syncIcon}>↻</span>
+          )}
+          {sync.isPending ? "Syncing…" : (syncMessage ?? "Sync")}
+        </button>
         <button className={styles.aiPill} onClick={() => navigate("/proposals")}>
           <span className={styles.aiDot} />
           {pendingProposals} proposal{pendingProposals !== 1 ? "s" : ""} to review

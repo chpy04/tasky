@@ -1,0 +1,94 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+}
+
+.glyph {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.title {
+  font-family: "DM Mono", monospace;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-ro-label);
+  letter-spacing: 0.03em;
+  flex: 1;
+}
+
+.readonlyBadge {
+  font-family: "DM Mono", monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4a4860;
+  border: 1px solid var(--color-ro-border);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+.description {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  color: #6e6080;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.markerRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.markerLabel {
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4a4860;
+}
+
+.marker {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  color: #7a6ec8;
+  background: var(--color-ro-bg);
+  border: 1px solid var(--color-ro-border);
+  border-radius: 3px;
+  padding: 6px 10px;
+  display: block;
+}
+
+.hint {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  color: #3a3850;
+  line-height: 1.7;
+  margin: 0;
+  font-style: italic;
+}
