@@ -8,6 +8,7 @@ export default defineConfig({
   server: {
     port: 7401,
     host: true,
+    allowedHosts: ['.lvh.me'],
     proxy: {
       // Proxy API requests to the FastAPI backend during development
       '/api': {

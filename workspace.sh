@@ -285,8 +285,12 @@ cmd_up() {
     cp -a "$MAIN_CHECKOUT/.claude" "$wt_path/.claude"
   fi
 
-  # 6. Ensure data directory exists in worktree
+  # 6. Copy SQLite database from main checkout (each workspace gets its own copy)
   mkdir -p "$wt_path/data"
+  if [ -f "$MAIN_CHECKOUT/data/app.db" ]; then
+    echo "Copying SQLite database from main checkout"
+    cp "$MAIN_CHECKOUT/data/app.db" "$wt_path/data/app.db"
+  fi
 
   # 7. Generate compose override and Traefik routing config
   generate_override "$name" "$wt_path"
