@@ -1,4 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { SOURCE_DISPLAY, type SourceType } from "../../utils/parsePrompt";
 import SourceIcon from "./SourceIcon";
 import styles from "./SourceEditor.module.css";
@@ -24,14 +26,18 @@ export default function SourceEditor({
   onDescriptionChange,
 }: SourceEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [editingSource, setEditingSource] = useState<SourceType | null>(null);
+  const isEditingContent = editingSource === selectedSource;
 
-  // Auto-resize textarea
+  // Auto-resize textarea and focus when entering edit mode
   useEffect(() => {
+    if (!isEditingContent) return;
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
-  }, [selectedSource, drafts]);
+    el.focus();
+  }, [isEditingContent]);
 
   if (!selectedSource) {
     return (
@@ -73,13 +79,33 @@ export default function SourceEditor({
       {/* Content */}
       <div className={styles.field}>
         <label className={styles.fieldLabel}>Content</label>
-        <textarea
-          ref={textareaRef}
-          className={styles.contentTextarea}
-          value={draft?.content ?? ""}
-          onChange={(e) => onContentChange(selectedSource, e.target.value)}
-          spellCheck={false}
-        />
+        {isEditingContent ? (
+          <textarea
+            ref={textareaRef}
+            className={styles.contentTextarea}
+            value={draft?.content ?? ""}
+            onChange={(e) => {
+              onContentChange(selectedSource, e.target.value);
+              const el = e.target;
+              el.style.height = "auto";
+              el.style.height = `${el.scrollHeight}px`;
+            }}
+            onBlur={() => setEditingSource(null)}
+            spellCheck={false}
+          />
+        ) : (
+          <div
+            className={styles.contentPreview}
+            onClick={() => setEditingSource(selectedSource)}
+            title="Click to edit"
+          >
+            {draft?.content ? (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{draft.content}</ReactMarkdown>
+            ) : (
+              <span className={styles.contentPlaceholder}>Click to edit content…</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

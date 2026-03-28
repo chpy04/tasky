@@ -92,6 +92,103 @@
   color: #3e2e1c;
 }
 
+.contentPreview {
+  width: 100%;
+  box-sizing: border-box;
+  background: #181410;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--color-text-body);
+  padding: 10px 12px;
+  min-height: 200px;
+  cursor: text;
+  transition: border-color 0.1s ease;
+}
+
+.contentPreview:hover {
+  border-color: var(--color-accent-focus);
+}
+
+/* Markdown elements inside preview */
+.contentPreview :global(p),
+.contentPreview :global(ul),
+.contentPreview :global(ol),
+.contentPreview :global(pre),
+.contentPreview :global(blockquote),
+.contentPreview :global(h1),
+.contentPreview :global(h2),
+.contentPreview :global(h3),
+.contentPreview :global(h4) {
+  margin: 0;
+}
+.contentPreview :global(li > p) {
+  margin: 0;
+}
+.contentPreview :global(h1),
+.contentPreview :global(h2),
+.contentPreview :global(h3),
+.contentPreview :global(h4) {
+  font-family: "Playfair Display", serif;
+  font-weight: 400;
+  color: var(--color-accent);
+}
+.contentPreview :global(h1) {
+  font-size: 1.25em;
+}
+.contentPreview :global(h2) {
+  font-size: 1.1em;
+}
+.contentPreview :global(h3) {
+  font-size: 1em;
+  font-style: italic;
+}
+.contentPreview :global(strong) {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+.contentPreview :global(em) {
+  font-style: italic;
+}
+.contentPreview :global(code) {
+  background: rgba(200, 168, 112, 0.1);
+  border-radius: 2px;
+  padding: 0 3px;
+  font-size: 0.9em;
+}
+.contentPreview :global(pre) {
+  background: rgba(200, 168, 112, 0.06);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 8px 10px;
+  overflow-x: auto;
+}
+.contentPreview :global(pre code) {
+  background: none;
+  padding: 0;
+}
+.contentPreview :global(ul),
+.contentPreview :global(ol) {
+  padding-left: 1.4em;
+}
+.contentPreview :global(blockquote) {
+  border-left: 2px solid var(--color-border);
+  padding-left: 0.75em;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.contentPreview :global(hr) {
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.contentPlaceholder {
+  color: #3e2e1c;
+  font-style: italic;
+}
+
 .contentTextarea {
   display: block;
   width: 100%;

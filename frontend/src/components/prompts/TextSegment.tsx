@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import styles from "./TextSegment.module.css";
 
 interface TextSegmentProps {
@@ -83,7 +85,11 @@ export default function TextSegment({
 
   return (
     <div className={styles.text} onClick={onFocus} title="Click to edit">
-      {content || <span className={styles.placeholder}>Click to edit…</span>}
+      {content ? (
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      ) : (
+        <span className={styles.placeholder}>Click to edit…</span>
+      )}
     </div>
   );
 }

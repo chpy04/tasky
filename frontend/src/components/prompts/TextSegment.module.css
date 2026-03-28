@@ -3,7 +3,6 @@
   font-size: 12.5px;
   line-height: 1.75;
   color: var(--color-text-body);
-  white-space: pre-wrap;
   word-break: break-word;
   padding: 10px 4px;
   border-radius: 3px;
@@ -14,6 +13,78 @@
 
 .text:hover {
   background: rgba(200, 168, 112, 0.04);
+}
+
+/* Markdown rendered content — reset all block margins to avoid double-spacing */
+.text :global(p),
+.text :global(ul),
+.text :global(ol),
+.text :global(pre),
+.text :global(blockquote),
+.text :global(h1),
+.text :global(h2),
+.text :global(h3),
+.text :global(h4) {
+  margin: 0;
+}
+.text :global(li > p) {
+  margin: 0;
+}
+.text :global(h1),
+.text :global(h2),
+.text :global(h3),
+.text :global(h4) {
+  font-family: "Playfair Display", serif;
+  font-weight: 400;
+  color: var(--color-accent);
+}
+.text :global(h1) {
+  font-size: 1.25em;
+}
+.text :global(h2) {
+  font-size: 1.1em;
+}
+.text :global(h3) {
+  font-size: 1em;
+  font-style: italic;
+}
+.text :global(strong) {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+.text :global(em) {
+  font-style: italic;
+}
+.text :global(code) {
+  background: rgba(200, 168, 112, 0.1);
+  border-radius: 2px;
+  padding: 0 3px;
+  font-size: 0.9em;
+}
+.text :global(pre) {
+  background: rgba(200, 168, 112, 0.06);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 8px 10px;
+  overflow-x: auto;
+}
+.text :global(pre code) {
+  background: none;
+  padding: 0;
+}
+.text :global(ul),
+.text :global(ol) {
+  padding-left: 1.4em;
+}
+.text :global(blockquote) {
+  border-left: 2px solid var(--color-border);
+  padding-left: 0.75em;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.text :global(hr) {
+  border: none;
+  border-top: 1px solid var(--color-border);
 }
 
 .placeholder {
