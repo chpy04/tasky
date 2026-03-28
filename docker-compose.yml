@@ -1,0 +1,36 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "7400:7400"
+    volumes:
+      - ./backend:/app
+      - ./data:/data
+      - ./vault:/vault
+    environment:
+      - DATABASE_URL=sqlite:////data/app.db
+      - VAULT_PATH=/vault
+    env_file:
+      - backend/.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7400/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "7401:7401"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - API_URL=http://api:7400
+    depends_on:
+      api:
+        condition: service_healthy
