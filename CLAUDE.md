@@ -70,13 +70,10 @@ cp backend/.env.example backend/.env
 ### Vault
 
 `vault/` is git-tracked markdown. Key subdirectories:
+
 - `Experiences/` — One folder per experience with a markdown overview
 - `Prompts/` — System prompts editable from the UI
 - `Daily/`, `Weekly/`, `Monthly/` — Summaries
-
-### Implementation Status
-
-Most files are stubs with `NotImplementedError` or empty bodies. Implemented: database models, migration framework, FastAPI router structure, service/connector/vault interfaces, Vite + React scaffold. Not yet implemented: router handlers, service logic, connector fetching, LLM client, VaultReader I/O, React routing, page components, TanStack Query hooks, background job scheduling.
 
 ## Tech Stack Details
 

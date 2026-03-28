@@ -28,3 +28,6 @@ docker-compose.workspace.yml
 
 # macOS
 .DS_Store
+
+# claude memoy
+docs/
