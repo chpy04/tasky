@@ -31,12 +31,17 @@ class IngestionService:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def trigger_run(
+    def create_run(
         self,
         range_start: datetime,
         range_end: datetime,
         triggered_by: TriggeredBy = TriggeredBy.manual,
     ) -> IngestionRun:
+        """Create an IngestionRun record with status=running and flush (no connectors).
+
+        Returns the run object so the caller can use run.id to dispatch a
+        background job.
+        """
         run = IngestionRun(
             status=RunStatus.running,
             range_start=range_start,
@@ -46,11 +51,24 @@ class IngestionService:
         )
         self.db.add(run)
         self.db.flush()
-
-        self._run_connectors(run)
+        self.db.commit()
         return run
 
-    def _run_connectors(self, run: IngestionRun) -> None:
+    def trigger_run(
+        self,
+        range_start: datetime,
+        range_end: datetime,
+        triggered_by: TriggeredBy = TriggeredBy.manual,
+    ) -> IngestionRun:
+        """Create a run record and immediately run connectors (synchronous path).
+
+        Used by the scheduler's synchronous background thread.
+        """
+        run = self.create_run(range_start, range_end, triggered_by=triggered_by)
+        self._run_connectors(run, set_final_status=True)
+        return run
+
+    def _run_connectors(self, run: IngestionRun, *, set_final_status: bool = True) -> None:
         connector_factories = [
             (
                 "github",
@@ -120,27 +138,33 @@ class IngestionService:
                 errors.append(error_msg)
                 continue
 
-        run.finished_at = datetime.now(timezone.utc)
+        self.db.flush()
 
-        if errors and not run.batches:
-            self.db.flush()
-            # Re-check after flush
-            batch_count = (
-                self.db.query(IngestionBatch)
-                .filter(IngestionBatch.ingestion_run_id == run.id)
-                .count()
-            )
-            if batch_count == 0:
-                run.status = RunStatus.failed
-                run.error_summary = "; ".join(errors)
+        if set_final_status:
+            run.finished_at = datetime.now(timezone.utc)
+
+            if errors:
+                batch_count = (
+                    self.db.query(IngestionBatch)
+                    .filter(IngestionBatch.ingestion_run_id == run.id)
+                    .count()
+                )
+                if batch_count == 0:
+                    run.status = RunStatus.failed
+                    run.error_summary = "; ".join(errors)
+                else:
+                    run.status = RunStatus.completed
             else:
                 run.status = RunStatus.completed
-        else:
-            run.status = RunStatus.completed
 
         self.db.commit()
 
-    def rerun(self, run_id: int) -> IngestionRun | None:
+    def reset_run_for_rerun(self, run_id: int) -> IngestionRun | None:
+        """Delete existing batches and reset the run record to status=running.
+
+        Returns the reset run object (no connectors run yet). Returns None if
+        the run does not exist.
+        """
         run = self.db.get(IngestionRun, run_id)
         if not run:
             return None
@@ -162,8 +186,14 @@ class IngestionService:
         run.started_at = datetime.now(timezone.utc)
         run.finished_at = None
         run.error_summary = None
-        self.db.flush()
+        self.db.commit()
+        return run
 
+    def rerun(self, run_id: int) -> IngestionRun | None:
+        """Reset a run and immediately run connectors (synchronous path)."""
+        run = self.reset_run_for_rerun(run_id)
+        if not run:
+            return None
         self._run_connectors(run)
         return run
 

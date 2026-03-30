@@ -1,7 +1,11 @@
 """Ingestion job: full pipeline (ingest + LLM proposals).
 
-`run_full_pipeline` is the single entry point used by both the scheduled
-background task (every 12 h) and the manual sync API endpoint.
+`run_full_pipeline` is the single entry point used by the scheduled
+background task (every 12 h).
+
+`run_full_pipeline_async` creates a run record and returns immediately;
+the caller is responsible for dispatching `_run_full_pipeline_bg` in a
+background thread via `asyncio.create_task(asyncio.to_thread(...))`.
 """
 
 import logging
@@ -10,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from app.models.ingestion_run import IngestionRun, TriggeredBy
+from app.models.ingestion_run import IngestionRun, RunStatus, TriggeredBy
 from app.services.ingestion_service import IngestionService
 
 logger = logging.getLogger(__name__)
@@ -146,3 +150,148 @@ def run_full_pipeline(
         "input_tokens": result.input_tokens,
         "output_tokens": result.output_tokens,
     }
+
+
+def run_full_pipeline_async(
+    db: Session,
+    triggered_by: TriggeredBy = TriggeredBy.manual,
+) -> IngestionRun:
+    """Create an IngestionRun with status=running and return it immediately.
+
+    The caller must dispatch `_run_full_pipeline_bg(run.id)` in a background
+    thread and claim the run in the run tracker. Does NOT run connectors or
+    the LLM.
+    """
+    range_start = _get_pipeline_range_start(db)
+    range_end = datetime.now(timezone.utc)
+
+    svc = IngestionService(db)
+    run = svc.create_run(range_start, range_end, triggered_by=triggered_by)
+    return run
+
+
+def _run_full_pipeline_bg(run_id: int) -> None:
+    """Background worker: run connectors + LLM for an existing IngestionRun.
+
+    Opens its own DB session (the HTTP request session is already closed).
+    Updates run.status to completed or failed when done and releases the
+    run from the tracker.
+    """
+    from app.db.session import SessionLocal
+    from app.jobs.run_tracker import release_run
+    from app.llm.client import LLMClient, LLMError
+    from app.llm.prompt_builder import build_proposal_prompt
+    from app.models.experience import Experience
+    from app.models.ingestion_run import IngestionRun
+    from app.models.task import Task, TaskStatus
+    from app.models.task_proposal import ProposalCreatedBy, ProposalType, TaskProposal
+
+    db = SessionLocal()
+    try:
+        run = db.query(IngestionRun).filter(IngestionRun.id == run_id).first()
+        if not run:
+            logger.error("Background pipeline: run %d not found", run_id)
+            return
+
+        # --- Connector phase ---
+        svc = IngestionService(db)
+        try:
+            svc._run_connectors(run, set_final_status=False)
+        except Exception as exc:
+            logger.error("Background pipeline connector phase failed for run %d: %s", run_id, exc)
+            run.status = RunStatus.failed
+            run.finished_at = datetime.now(timezone.utc)
+            run.error_summary = str(exc)
+            db.commit()
+            return
+
+        # Refresh batches after connector phase flush.
+        db.refresh(run)
+        if not run.batches:
+            logger.warning("Background pipeline run %d produced no batches — skipping LLM", run_id)
+            run.status = RunStatus.completed
+            run.finished_at = datetime.now(timezone.utc)
+            db.commit()
+            return
+
+        # --- LLM proposal phase ---
+        active_tasks = (
+            db.query(Task).filter(Task.status.notin_([TaskStatus.done, TaskStatus.cancelled])).all()
+        )
+        active_experiences = db.query(Experience).filter(Experience.active.is_(True)).all()
+        experience_name_to_id = {exp.folder_path: exp.id for exp in active_experiences}
+
+        system_prompt, user_prompt = build_proposal_prompt(
+            run, db, active_tasks, active_experiences
+        )
+
+        try:
+            t0 = time.monotonic()
+            result = LLMClient().generate_proposals_with_meta(system_prompt, user_prompt)
+            duration_ms = round((time.monotonic() - t0) * 1000)
+        except LLMError as exc:
+            logger.error("Background pipeline LLM call failed for run %d: %s", run_id, exc)
+            run.status = RunStatus.failed
+            run.error_summary = str(exc)
+            db.commit()
+            return
+
+        batch_id = run.batches[0].id if run.batches else None
+        now = datetime.now(timezone.utc)
+        saved_count = 0
+        for p in result.batch.proposals:
+            due_at = None
+            if p.proposed_due_at:
+                try:
+                    due_at = datetime.fromisoformat(p.proposed_due_at.replace("Z", "+00:00"))
+                except ValueError:
+                    pass
+            experience_id = (
+                experience_name_to_id.get(p.proposed_experience_name)
+                if p.proposed_experience_name
+                else None
+            )
+            proposal = TaskProposal(
+                proposal_type=ProposalType(p.proposal_type),
+                status="pending",
+                task_id=p.task_id,
+                proposed_title=p.proposed_title,
+                proposed_description=p.proposed_description,
+                proposed_status=p.proposed_status,
+                proposed_experience_id=experience_id,
+                proposed_due_at=due_at,
+                proposed_external_ref=p.proposed_external_ref,
+                reason_summary=p.reason_summary,
+                created_at=now,
+                created_by=ProposalCreatedBy.ai,
+                ingestion_batch_id=batch_id,
+            )
+            db.add(proposal)
+            saved_count += 1
+
+        run.status = RunStatus.completed
+        run.finished_at = datetime.now(timezone.utc)
+        db.commit()
+
+        logger.info(
+            "Background pipeline complete: run=%d proposals=%d duration=%dms",
+            run_id,
+            saved_count,
+            duration_ms,
+        )
+    except Exception as exc:
+        logger.error(
+            "Background pipeline unexpected error for run %d: %s", run_id, exc, exc_info=True
+        )
+        try:
+            run = db.query(IngestionRun).filter(IngestionRun.id == run_id).first()
+            if run and run.status == RunStatus.running:
+                run.status = RunStatus.failed
+                run.error_summary = f"Unexpected error: {exc}"
+                db.commit()
+        except Exception:
+            pass
+        raise
+    finally:
+        db.close()
+        release_run(run_id)

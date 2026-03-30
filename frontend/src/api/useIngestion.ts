@@ -1,5 +1,6 @@
 // src/api/useIngestion.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 
 export type SourceId = "github" | "gmail" | "slack" | "canvas";
 
@@ -75,6 +76,12 @@ export interface IngestionRunDetail extends IngestionRunSummary {
   batches: IngestionBatchDetail[];
 }
 
+async function fetchRun(runId: number): Promise<IngestionRunDetail> {
+  const res = await fetch(`/api/ingestion/runs/${runId}`);
+  if (!res.ok) throw new Error("Failed to fetch run");
+  return res.json();
+}
+
 export function useIngestionRuns() {
   return useQuery<IngestionRunSummary[]>({
     queryKey: ["ingestion-runs"],
@@ -98,8 +105,41 @@ export function useIngestionRun(id: number | null) {
   });
 }
 
+// ── Run status poller ──────────────────────────────────────────────────────────
+
+/**
+ * Polls GET /ingestion/runs/{runId} every 2.5 s while the run is in "running"
+ * status. Stops polling automatically once the status transitions.
+ */
+function useRunStatusPoller(runId: number | null) {
+  return useQuery<IngestionRunDetail>({
+    queryKey: ["ingestion-run", runId],
+    queryFn: () => fetchRun(runId!),
+    enabled: runId !== null,
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 2500 : false),
+  });
+}
+
 export function useCreateIngestionRun() {
   const qc = useQueryClient();
+  const [activeRunId, setActiveRunId] = useState<number | null>(null);
+  const invalidatedForRef = useRef<number | null>(null);
+
+  const polled = useRunStatusPoller(activeRunId);
+
+  // When the polled run transitions out of "running", invalidate caches (once per run).
+  useEffect(() => {
+    if (
+      activeRunId !== null &&
+      polled.data &&
+      polled.data.status !== "running" &&
+      invalidatedForRef.current !== activeRunId
+    ) {
+      invalidatedForRef.current = activeRunId;
+      qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
+    }
+  }, [activeRunId, polled.data, qc]);
+
   return useMutation({
     mutationFn: async (params: { start_date: string; end_date?: string }) => {
       const res = await fetch("/api/ingestion/runs", {
@@ -111,7 +151,7 @@ export function useCreateIngestionRun() {
         const body = await res.text().catch(() => res.statusText);
         throw new Error(`Create run failed (${res.status}): ${body}`);
       }
-      return res.json() as Promise<IngestionRunDetail>;
+      return res.json() as Promise<IngestionRunSummary>;
     },
     onMutate: async (params) => {
       await qc.cancelQueries({ queryKey: ["ingestion-runs"] });
@@ -140,7 +180,8 @@ export function useCreateIngestionRun() {
         qc.setQueryData(["ingestion-runs"], context.previous);
       }
     },
-    onSettled: () => {
+    onSuccess: (data) => {
+      setActiveRunId(data.id);
       qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
     },
   });
@@ -148,6 +189,24 @@ export function useCreateIngestionRun() {
 
 export function useRerunIngestionRun() {
   const qc = useQueryClient();
+  const [activeRunId, setActiveRunId] = useState<number | null>(null);
+  const invalidatedForRef = useRef<number | null>(null);
+
+  const polled = useRunStatusPoller(activeRunId);
+
+  // When the polled run transitions out of "running", invalidate caches (once per run).
+  useEffect(() => {
+    if (
+      activeRunId !== null &&
+      polled.data &&
+      polled.data.status !== "running" &&
+      invalidatedForRef.current !== activeRunId
+    ) {
+      invalidatedForRef.current = activeRunId;
+      qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
+    }
+  }, [activeRunId, polled.data, qc]);
+
   return useMutation({
     mutationFn: async (runId: number) => {
       const res = await fetch(`/api/ingestion/runs/${runId}/rerun`, {
@@ -157,9 +216,10 @@ export function useRerunIngestionRun() {
         const body = await res.text().catch(() => res.statusText);
         throw new Error(`Rerun failed (${res.status}): ${body}`);
       }
-      return res.json() as Promise<IngestionRunDetail>;
+      return res.json() as Promise<IngestionRunSummary>;
     },
-    onSuccess: (_data, runId) => {
+    onSuccess: (data, runId) => {
+      setActiveRunId(data.id);
       qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
       qc.invalidateQueries({ queryKey: ["ingestion-run", runId] });
     },
@@ -203,14 +263,10 @@ export interface RunProposal {
 
 export interface ProposeResult {
   run_id: number;
-  model: string;
-  proposals_saved: number;
-  input_tokens: number;
-  output_tokens: number;
-  duration_ms: number;
+  status: "running";
 }
 
-export function useRunProposals(runId: number | null) {
+export function useRunProposals(runId: number | null, refetchWhileProposing = false) {
   return useQuery<RunProposal[]>({
     queryKey: ["ingestion-run-proposals", runId],
     queryFn: async () => {
@@ -219,6 +275,7 @@ export function useRunProposals(runId: number | null) {
       return res.json();
     },
     enabled: runId !== null,
+    refetchInterval: refetchWhileProposing ? 2500 : false,
   });
 }
 
@@ -239,7 +296,49 @@ export function useRunPrompt(runId: number | null) {
 
 export function useProposeTasksForRun() {
   const qc = useQueryClient();
-  return useMutation({
+  const [proposingRunId, setProposingRunId] = useState<number | null>(null);
+  const invalidatedForRef = useRef<number | null>(null);
+
+  // Also poll the run itself so we can detect completion / failure.
+  const polledRun = useQuery<IngestionRunDetail>({
+    queryKey: ["ingestion-run", proposingRunId],
+    queryFn: () => fetchRun(proposingRunId!),
+    enabled: proposingRunId !== null,
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 2500 : false),
+  });
+
+  // Derive proposing state from run data.
+  const isProposing =
+    proposingRunId !== null && (!polledRun.data || polledRun.data.status === "running");
+
+  // Poll the proposals list while a propose job is in flight.
+  useQuery<RunProposal[]>({
+    queryKey: ["ingestion-run-proposals", proposingRunId],
+    queryFn: async () => {
+      const res = await fetch(`/api/ingestion/runs/${proposingRunId}/proposals`);
+      if (!res.ok) throw new Error("Failed to fetch proposals");
+      return res.json();
+    },
+    enabled: proposingRunId !== null && isProposing,
+    refetchInterval: isProposing ? 2500 : false,
+  });
+
+  // When the run is no longer running, invalidate caches (once per run).
+  useEffect(() => {
+    if (
+      proposingRunId !== null &&
+      polledRun.data &&
+      polledRun.data.status !== "running" &&
+      invalidatedForRef.current !== proposingRunId
+    ) {
+      invalidatedForRef.current = proposingRunId;
+      qc.invalidateQueries({ queryKey: ["ingestion-run-proposals", proposingRunId] });
+      qc.invalidateQueries({ queryKey: ["proposals"] });
+      qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
+    }
+  }, [proposingRunId, polledRun.data, qc]);
+
+  const mutation = useMutation({
     mutationFn: async (runId: number): Promise<ProposeResult> => {
       const res = await fetch(`/api/ingestion/runs/${runId}/propose`, { method: "POST" });
       if (!res.ok) {
@@ -249,10 +348,17 @@ export function useProposeTasksForRun() {
       return res.json();
     },
     onSuccess: (_data, runId) => {
-      qc.invalidateQueries({ queryKey: ["ingestion-run-proposals", runId] });
-      qc.invalidateQueries({ queryKey: ["proposals"] });
+      invalidatedForRef.current = null;
+      setProposingRunId(runId);
+      // Immediately invalidate so the run list shows "running" status.
+      qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
+    },
+    onError: () => {
+      setProposingRunId(null);
     },
   });
+
+  return { mutation, isProposing };
 }
 
 // ── Prompt & LLM preview types ───────────────────────────────────────────────
@@ -306,12 +412,7 @@ export function useLLMPreview() {
 
 export interface SyncResult {
   run_id: number;
-  status: string;
-  proposals_saved: number;
-  duration_ms?: number;
-  input_tokens?: number;
-  output_tokens?: number;
-  error?: string;
+  status: "running";
 }
 
 export function useSyncPipeline() {
@@ -330,4 +431,82 @@ export function useSyncPipeline() {
       qc.invalidateQueries({ queryKey: ["proposals"] });
     },
   });
+}
+
+/**
+ * Full-pipeline sync with async polling support.
+ *
+ * Fires POST /sync → receives {run_id, status: "running"} → polls
+ * GET /ingestion/runs/{run_id} every 2.5 s until the run is no longer
+ * "running", then invalidates ingestion-runs and proposals caches.
+ *
+ * Returns { trigger, isRunning, run, error }.
+ */
+export function useSyncPipelineWithPolling() {
+  const qc = useQueryClient();
+  const [runId, setRunId] = useState<number | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const invalidatedForRef = useRef<number | null>(null);
+
+  // On mount, check if there's already a running run (survives navigation/refresh).
+  const runsQuery = useQuery<IngestionRunSummary[]>({
+    queryKey: ["ingestion-runs"],
+    queryFn: async () => {
+      const res = await fetch("/api/ingestion/runs");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (runId === null && runsQuery.data) {
+      const running = runsQuery.data.find((r) => r.status === "running");
+      if (running) {
+        setRunId(running.id);
+      }
+    }
+  }, [runId, runsQuery.data]);
+
+  const run = useQuery<IngestionRunDetail>({
+    queryKey: ["ingestion-run", runId],
+    queryFn: () => fetchRun(runId!),
+    enabled: runId !== null,
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 2500 : false),
+  });
+
+  // Derive running state from query data.
+  const isRunning = runId !== null && (!run.data || run.data.status === "running");
+
+  // When status transitions out of "running", refresh caches (once per run).
+  useEffect(() => {
+    if (
+      runId !== null &&
+      run.data &&
+      run.data.status !== "running" &&
+      invalidatedForRef.current !== runId
+    ) {
+      invalidatedForRef.current = runId;
+      qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
+      qc.invalidateQueries({ queryKey: ["proposals"] });
+    }
+  }, [runId, run.data, qc]);
+
+  const trigger = async () => {
+    setError(null);
+    setRunId(null);
+    invalidatedForRef.current = null;
+    try {
+      const res = await fetch("/api/ingestion/sync", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.text().catch(() => res.statusText);
+        throw new Error(`Sync failed (${res.status}): ${body}`);
+      }
+      const data: SyncResult = await res.json();
+      setRunId(data.run_id);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error(String(err)));
+    }
+  };
+
+  return { trigger, isRunning, run: run.data ?? null, error };
 }

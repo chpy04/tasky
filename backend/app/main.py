@@ -48,8 +48,31 @@ async def _scheduler_loop() -> None:
             logger.error("Scheduler loop error: %s", exc, exc_info=True)
 
 
+async def _reset_stale_runs() -> None:
+    """Reset any IngestionRuns stuck in 'running' to 'failed' on startup.
+
+    Prevents the concurrency guard from permanently blocking after a server
+    crash or restart while a run was in progress.
+    """
+    from app.db.session import SessionLocal
+    from app.models.ingestion_run import IngestionRun, RunStatus
+
+    db = SessionLocal()
+    try:
+        stale = db.query(IngestionRun).filter(IngestionRun.status == RunStatus.running).all()
+        for run in stale:
+            run.status = RunStatus.failed
+            run.error_summary = "server restarted while run was in progress"
+        if stale:
+            db.commit()
+            logger.warning("Reset %d stale running runs to failed", len(stale))
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await _reset_stale_runs()
     task = asyncio.create_task(_scheduler_loop())
     logger.info("Background pipeline scheduler started (interval=%dh)", _SCHEDULE_INTERVAL_HOURS)
     try:

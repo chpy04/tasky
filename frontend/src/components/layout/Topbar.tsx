@@ -1,9 +1,9 @@
 // src/components/layout/Topbar.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Task } from "../../types";
 import { usePendingProposalCount } from "../../api/useProposals";
-import { useSyncPipeline } from "../../api/useIngestion";
+import { useSyncPipelineWithPolling } from "../../api/useIngestion";
 import styles from "./Topbar.module.css";
 
 interface TopbarProps {
@@ -38,21 +38,42 @@ function LogoCup() {
 export default function Topbar({ tasks, onNewTask }: TopbarProps) {
   const navigate = useNavigate();
   const pendingProposals = usePendingProposalCount();
-  const sync = useSyncPipeline();
+  const { trigger, isRunning, run, error } = useSyncPipelineWithPolling();
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
-  function handleSync() {
+  // Detect run status transitions during render (React recommended pattern
+  // for adjusting state when props/derived data change).
+  const [prevRunStatus, setPrevRunStatus] = useState<string | null>(null);
+  const currentRunStatus = run?.status ?? null;
+  if (currentRunStatus !== prevRunStatus) {
+    setPrevRunStatus(currentRunStatus);
+    if (currentRunStatus === "failed") {
+      setSyncMessage("sync failed");
+    } else if (currentRunStatus === "completed") {
+      const count = run!.proposal_count;
+      setSyncMessage(`+${count} proposal${count !== 1 ? "s" : ""}`);
+    }
+  }
+
+  // Detect trigger errors during render.
+  const [prevError, setPrevError] = useState<Error | null>(null);
+  if (error !== prevError) {
+    setPrevError(error);
+    if (error) {
+      setSyncMessage("sync failed");
+    }
+  }
+
+  // Auto-dismiss sync message after 4 seconds.
+  useEffect(() => {
+    if (!syncMessage) return;
+    const t = setTimeout(() => setSyncMessage(null), 10000);
+    return () => clearTimeout(t);
+  }, [syncMessage]);
+
+  async function handleSync() {
     setSyncMessage(null);
-    sync.mutate(undefined, {
-      onSuccess: (data) => {
-        setSyncMessage(`+${data.proposals_saved} proposal${data.proposals_saved !== 1 ? "s" : ""}`);
-        setTimeout(() => setSyncMessage(null), 4000);
-      },
-      onError: () => {
-        setSyncMessage("sync failed");
-        setTimeout(() => setSyncMessage(null), 4000);
-      },
-    });
+    await trigger();
   }
 
   const openCount = tasks.filter((t) =>
@@ -87,15 +108,15 @@ export default function Topbar({ tasks, onNewTask }: TopbarProps) {
         <button
           className={styles.syncBtn}
           onClick={handleSync}
-          disabled={sync.isPending}
+          disabled={isRunning}
           title="Ingest from last sync to now and generate proposals"
         >
-          {sync.isPending ? (
+          {isRunning ? (
             <span className={styles.syncSpinner} />
           ) : (
             <span className={styles.syncIcon}>↻</span>
           )}
-          {sync.isPending ? "Syncing…" : (syncMessage ?? "Sync")}
+          {isRunning ? "Syncing…" : (syncMessage ?? "Sync")}
         </button>
         <button className={styles.aiPill} onClick={() => navigate("/proposals")}>
           <span className={styles.aiDot} />
