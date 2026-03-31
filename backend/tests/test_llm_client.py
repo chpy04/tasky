@@ -9,7 +9,7 @@ from app.llm.schemas import ProposalBatch
 
 
 def _make_completion(arguments, tool_name="submit_proposals"):
-    """Build a mock Dedalus completion response."""
+    """Build a mock OpenAI completion response."""
     tool_call = MagicMock()
     tool_call.function.name = tool_name
     tool_call.function.arguments = arguments
@@ -29,7 +29,7 @@ def _make_completion(arguments, tool_name="submit_proposals"):
     return completion
 
 
-@patch("app.llm.client.Dedalus")
+@patch("app.llm.client.OpenAI")
 def test_generate_proposals_parses_valid_response(mock_dedalus_cls):
     mock_client = MagicMock()
     mock_dedalus_cls.return_value = mock_client
@@ -57,7 +57,7 @@ def test_generate_proposals_parses_valid_response(mock_dedalus_cls):
     }
 
 
-@patch("app.llm.client.Dedalus")
+@patch("app.llm.client.OpenAI")
 def test_generate_proposals_handles_dict_arguments(mock_dedalus_cls):
     """Some providers return arguments as a dict instead of a JSON string."""
     mock_client = MagicMock()
@@ -83,7 +83,7 @@ def test_generate_proposals_handles_dict_arguments(mock_dedalus_cls):
     assert batch.proposals[0].task_id == 7
 
 
-@patch("app.llm.client.Dedalus")
+@patch("app.llm.client.OpenAI")
 def test_generate_proposals_raises_on_no_tool_calls(mock_dedalus_cls):
     mock_client = MagicMock()
     mock_dedalus_cls.return_value = mock_client
@@ -102,7 +102,7 @@ def test_generate_proposals_raises_on_no_tool_calls(mock_dedalus_cls):
         client.generate_proposals("system", "user")
 
 
-@patch("app.llm.client.Dedalus")
+@patch("app.llm.client.OpenAI")
 def test_generate_proposals_raises_on_invalid_json(mock_dedalus_cls):
     mock_client = MagicMock()
     mock_dedalus_cls.return_value = mock_client
@@ -114,7 +114,7 @@ def test_generate_proposals_raises_on_invalid_json(mock_dedalus_cls):
         client.generate_proposals("system", "user")
 
 
-@patch("app.llm.client.Dedalus")
+@patch("app.llm.client.OpenAI")
 def test_generate_proposals_raises_on_api_error(mock_dedalus_cls):
     mock_client = MagicMock()
     mock_dedalus_cls.return_value = mock_client
@@ -122,11 +122,11 @@ def test_generate_proposals_raises_on_api_error(mock_dedalus_cls):
     mock_client.chat.completions.create.side_effect = RuntimeError("connection timeout")
 
     client = LLMClient()
-    with pytest.raises(LLMError, match="Dedalus API call failed"):
+    with pytest.raises(LLMError, match="OpenAI API call failed"):
         client.generate_proposals("system", "user")
 
 
-@patch("app.llm.client.Dedalus")
+@patch("app.llm.client.OpenAI")
 def test_generate_proposals_raises_on_wrong_tool_name(mock_dedalus_cls):
     mock_client = MagicMock()
     mock_dedalus_cls.return_value = mock_client
@@ -140,7 +140,7 @@ def test_generate_proposals_raises_on_wrong_tool_name(mock_dedalus_cls):
         client.generate_proposals("system", "user")
 
 
-@patch("app.llm.client.Dedalus")
+@patch("app.llm.client.OpenAI")
 def test_generate_proposals_validates_enum_values(mock_dedalus_cls):
     mock_client = MagicMock()
     mock_dedalus_cls.return_value = mock_client
