@@ -12,6 +12,7 @@ Endpoints:
     POST   /ingestion/runs/{id}/rerun  Re-run an existing ingestion run
 """
 
+import asyncio
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -186,16 +187,26 @@ def _run_to_detail(run) -> dict:
 
 
 @router.post("/runs")
-def create_run(body: CreateRunRequest, db: Session = Depends(get_db)):
+async def create_run(body: CreateRunRequest, db: Session = Depends(get_db)):
+    from app.jobs.ingestion_job import _run_full_pipeline_bg
+    from app.jobs.run_tracker import claim_run, has_active_run
+    from app.models.ingestion_run import IngestionRun, RunStatus
     from app.services.ingestion_service import IngestionService
+
+    existing = db.query(IngestionRun).filter(IngestionRun.status == RunStatus.running).first()
+    if has_active_run() or existing:
+        raise HTTPException(status_code=409, detail="A run is already in progress")
 
     range_start = datetime.fromisoformat(body.start_date)
     range_end = (
         datetime.fromisoformat(body.end_date) if body.end_date else datetime.now(timezone.utc)
     )
     svc = IngestionService(db)
-    run = svc.trigger_run(range_start, range_end)
-    return _run_to_detail(run)
+    run = svc.create_run(range_start, range_end)
+    if not claim_run(run.id):
+        raise HTTPException(status_code=409, detail="A run is already in progress")
+    asyncio.create_task(asyncio.to_thread(_run_full_pipeline_bg, run.id))
+    return _run_to_summary(run)
 
 
 @router.get("/runs")
@@ -217,26 +228,46 @@ def get_run(run_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/runs/{run_id}/rerun")
-def rerun(run_id: int, db: Session = Depends(get_db)):
+async def rerun(run_id: int, db: Session = Depends(get_db)):
+    from app.jobs.ingestion_job import _run_full_pipeline_bg
+    from app.jobs.run_tracker import claim_run, has_active_run
+    from app.models.ingestion_run import IngestionRun, RunStatus
     from app.services.ingestion_service import IngestionService
 
-    run = IngestionService(db).rerun(run_id)
+    existing = db.query(IngestionRun).filter(IngestionRun.status == RunStatus.running).first()
+    if has_active_run() or existing:
+        raise HTTPException(status_code=409, detail="A run is already in progress")
+
+    run = IngestionService(db).reset_run_for_rerun(run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    return _run_to_detail(run)
+    if not claim_run(run.id):
+        raise HTTPException(status_code=409, detail="A run is already in progress")
+    asyncio.create_task(asyncio.to_thread(_run_full_pipeline_bg, run.id))
+    return _run_to_summary(run)
 
 
 @router.post("/sync")
-def sync(db: Session = Depends(get_db)):
-    """Run a full ingestion + LLM pipeline from the last run's end time to now.
+async def sync(db: Session = Depends(get_db)):
+    """Kick off a full ingestion + LLM pipeline asynchronously.
 
-    Determines range_start automatically from the most recent run's range_end,
-    falling back to 24 hours ago if no prior runs exist.
+    Returns immediately with {run_id, status: "running"}.
+    Poll GET /ingestion/runs/{run_id} for live status.
+    Returns 409 if a run is already in progress.
     """
-    from app.jobs.ingestion_job import run_full_pipeline
-    from app.models.ingestion_run import TriggeredBy
+    from app.jobs.ingestion_job import _run_full_pipeline_bg, run_full_pipeline_async
+    from app.jobs.run_tracker import claim_run, has_active_run
+    from app.models.ingestion_run import IngestionRun, RunStatus, TriggeredBy
 
-    return run_full_pipeline(db, triggered_by=TriggeredBy.manual)
+    existing = db.query(IngestionRun).filter(IngestionRun.status == RunStatus.running).first()
+    if has_active_run() or existing:
+        raise HTTPException(status_code=409, detail="A run is already in progress")
+
+    run = run_full_pipeline_async(db, triggered_by=TriggeredBy.manual)
+    if not claim_run(run.id):
+        raise HTTPException(status_code=409, detail="A run is already in progress")
+    asyncio.create_task(asyncio.to_thread(_run_full_pipeline_bg, run.id))
+    return {"run_id": run.id, "status": "running"}
 
 
 @router.delete("/runs/{run_id}")
@@ -289,88 +320,26 @@ def get_run_proposals(run_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/runs/{run_id}/propose")
-def propose_tasks(run_id: int, db: Session = Depends(get_db)):
-    """Run LLM proposal generation for a run.
+async def propose_tasks(run_id: int, db: Session = Depends(get_db)):
+    """Kick off LLM proposal generation for a run asynchronously.
 
-    Deletes all existing proposals for this run's batches, then calls the LLM
-    and saves the new proposals with status=pending.
+    Returns immediately with {run_id, status: "running"}.
+    Poll GET /ingestion/runs/{run_id}/proposals for results.
+    Returns 409 if a propose job is already running for this run.
     """
-    from app.llm.client import LLMClient, LLMError
-    from app.llm.prompt_builder import build_proposal_prompt
-    from app.models.experience import Experience
-    from app.models.task import Task, TaskStatus
-    from app.models.task_proposal import ProposalCreatedBy, ProposalType, TaskProposal
+    from app.jobs.propose_job import run_propose_bg
+    from app.jobs.run_tracker import claim_propose
     from app.services.ingestion_service import IngestionService
 
     run = IngestionService(db).get_run(run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
 
-    # Delete existing proposals for this run's batches.
-    batch_ids = [b.id for b in run.batches]
-    if batch_ids:
-        db.query(TaskProposal).filter(TaskProposal.ingestion_batch_id.in_(batch_ids)).delete(
-            synchronize_session=False
-        )
-        db.commit()
+    if not claim_propose(run_id):
+        raise HTTPException(status_code=409, detail="Proposal already in progress for this run")
 
-    active_tasks = (
-        db.query(Task).filter(Task.status.notin_([TaskStatus.done, TaskStatus.cancelled])).all()
-    )
-    active_experiences = db.query(Experience).filter(Experience.active.is_(True)).all()
-    experience_name_to_id = {exp.folder_path: exp.id for exp in active_experiences}
-
-    system_prompt, user_prompt = build_proposal_prompt(run, db, active_tasks, active_experiences)
-
-    try:
-        t0 = time.monotonic()
-        result = LLMClient().generate_proposals_with_meta(system_prompt, user_prompt)
-        duration_ms = round((time.monotonic() - t0) * 1000)
-    except LLMError as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
-    batch_id = run.batches[0].id if run.batches else None
-    now = datetime.now(timezone.utc)
-    saved = []
-    for p in result.batch.proposals:
-        due_at = None
-        if p.proposed_due_at:
-            try:
-                due_at = datetime.fromisoformat(p.proposed_due_at.replace("Z", "+00:00"))
-            except ValueError:
-                pass
-        experience_id = (
-            experience_name_to_id.get(p.proposed_experience_name)
-            if p.proposed_experience_name
-            else None
-        )
-        proposal = TaskProposal(
-            proposal_type=ProposalType(p.proposal_type),
-            status="pending",
-            task_id=p.task_id,
-            proposed_title=p.proposed_title,
-            proposed_description=p.proposed_description,
-            proposed_status=p.proposed_status,
-            proposed_experience_id=experience_id,
-            proposed_due_at=due_at,
-            proposed_external_ref=p.proposed_external_ref,
-            reason_summary=p.reason_summary,
-            created_at=now,
-            created_by=ProposalCreatedBy.ai,
-            ingestion_batch_id=batch_id,
-        )
-        db.add(proposal)
-        saved.append(proposal)
-    db.commit()
-
-    return {
-        "run_id": run.id,
-        "model": result.model,
-        "proposals_saved": len(saved),
-        "input_tokens": result.input_tokens,
-        "output_tokens": result.output_tokens,
-        "duration_ms": duration_ms,
-    }
+    asyncio.create_task(asyncio.to_thread(run_propose_bg, run_id))
+    return {"run_id": run_id, "status": "running"}
 
 
 # ---------------------------------------------------------------------------

@@ -308,8 +308,8 @@ def test_until_param_forwarded(MockGH, MockGmail, MockSlack, MockCanvas, db):
     MockCanvas.side_effect = ValueError("not configured")
 
     svc = IngestionService(db)
-    since = datetime(2026, 3, 1, tzinfo=timezone.utc)
-    until = datetime(2026, 3, 15, tzinfo=timezone.utc)
+    since = datetime(2026, 3, 1)
+    until = datetime(2026, 3, 15)
     svc.trigger_run(since, until)
 
     MockGH.return_value.fetch.assert_called_once_with(since=since, until=until)

@@ -7,6 +7,7 @@ services:
       - "7400:7400"
     volumes:
       - ./backend:/app
+      - /app/.venv
       - ./data:/data
       - ./vault:/vault
     environment:
@@ -16,9 +17,10 @@ services:
       - backend/.env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7400/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   frontend:
     build:

@@ -16,12 +16,7 @@ import {
   useRunProposals,
   useProposeTasksForRun,
 } from "../api/useIngestion";
-import type {
-  SourceId,
-  IngestionRunSummary,
-  RunProposal,
-  ProposeResult,
-} from "../api/useIngestion";
+import type { SourceId, IngestionRunSummary, RunProposal } from "../api/useIngestion";
 import { useGmailAuth } from "../api/useGmailAuth";
 import styles from "./Ingestion.module.css";
 
@@ -459,37 +454,26 @@ function ProposalCard({ proposal }: { proposal: RunProposal }) {
 
 function RunProposalsTab({
   runId,
-  proposeResult,
   proposeError,
   isPending,
 }: {
   runId: number;
-  proposeResult: ProposeResult | undefined;
   proposeError: Error | null;
   isPending: boolean;
 }) {
-  const proposals = useRunProposals(runId);
+  // Poll proposals at 2.5 s while a propose job is in flight.
+  const proposals = useRunProposals(runId, isPending);
 
   return (
     <>
       {isPending && (
         <div className={styles.statusStrip}>
-          <span className={styles.statusMeta}>running LLM…</span>
+          <span className={styles.statusMeta}>generating proposals…</span>
         </div>
       )}
       {proposeError && (
         <div className={styles.statusStrip}>
           <span className={styles.statusError}>✗ {proposeError.message}</span>
-        </div>
-      )}
-      {proposeResult && (
-        <div className={styles.statusStrip}>
-          <span className={styles.statusOk}>✓ {proposeResult.proposals_saved} proposals saved</span>
-          <span className={styles.statusMeta}>
-            {proposeResult.model} · {proposeResult.input_tokens.toLocaleString()} in ·{" "}
-            {proposeResult.output_tokens.toLocaleString()} out ·{" "}
-            {(proposeResult.duration_ms / 1000).toFixed(1)}s
-          </span>
         </div>
       )}
       {proposals.isLoading && <p className={styles.empty}>loading proposals…</p>}
@@ -541,15 +525,10 @@ function RunRow({ run }: { run: IngestionRunSummary }) {
   const detail = useIngestionRun(expanded && !isPlaceholder ? run.id : null);
   const rerun = useRerunIngestionRun();
   const deleteRun = useDeleteIngestionRun();
-  const proposeTasks = useProposeTasksForRun();
+  const { mutation: proposeTasks, isProposing } = useProposeTasksForRun();
 
-  const displayStatus = getDisplayStatus(run, proposeTasks.isPending, proposeTasks.isSuccess);
-  const proposalCount = proposeTasks.isSuccess
-    ? proposeTasks.data.proposals_saved
-    : run.proposal_count > 0
-      ? run.proposal_count
-      : null;
-  const tokenCount = proposeTasks.data?.input_tokens ?? null;
+  const displayStatus = getDisplayStatus(run, isProposing, proposeTasks.isSuccess);
+  const proposalCount = run.proposal_count > 0 ? run.proposal_count : null;
 
   const statusCls = {
     running: styles.runStatusRunning,
@@ -575,16 +554,11 @@ function RunRow({ run }: { run: IngestionRunSummary }) {
             {" → "}
             {run.range_end ? fmtDateNoYear(run.range_end) : "now"}
           </span>
-          {(proposalCount !== null || tokenCount !== null) && (
+          {proposalCount !== null && (
             <span className={styles.runMetaChips}>
-              {proposalCount !== null && (
-                <span className={styles.runMetaChip}>
-                  {proposalCount} {proposalCount === 1 ? "proposal" : "proposals"}
-                </span>
-              )}
-              {tokenCount !== null && (
-                <span className={styles.runMetaChip}>~{tokenCount.toLocaleString()} tokens</span>
-              )}
+              <span className={styles.runMetaChip}>
+                {proposalCount} {proposalCount === 1 ? "proposal" : "proposals"}
+              </span>
             </span>
           )}
         </button>
@@ -596,9 +570,9 @@ function RunRow({ run }: { run: IngestionRunSummary }) {
             <Button
               variant="ghost"
               onClick={() => proposeTasks.mutate(run.id)}
-              disabled={proposeTasks.isPending}
+              disabled={proposeTasks.isPending || isProposing}
             >
-              {proposeTasks.isPending ? "proposing…" : "propose tasks"}
+              {isProposing ? "proposing…" : "propose tasks"}
             </Button>
             <Button
               variant="ghost"
@@ -664,9 +638,8 @@ function RunRow({ run }: { run: IngestionRunSummary }) {
             {innerTab === "proposals" && (
               <RunProposalsTab
                 runId={run.id}
-                proposeResult={proposeTasks.data}
                 proposeError={proposeTasks.error as Error | null}
-                isPending={proposeTasks.isPending}
+                isPending={isProposing}
               />
             )}
           </div>
